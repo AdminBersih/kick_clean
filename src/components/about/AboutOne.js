@@ -14,10 +14,10 @@ const AboutOne = () => {
                         <div className="col-xl-6">
                             <div className="about-one__img clearfix">
                                 <div className="about-one__img-inner">
-                                    <img src="/assets/images/about/about-v1-img1.jpg" alt="Kick Clean Gentan" />
+                                    <img src="/assets/images/about/about-v1-img1.jpeg" alt="Kick Clean Gentan" />
                                 </div>
                                 <div className="experince-box">
-                                    <h2>5+ Tahun Pengalaman</h2>
+                                    <h2>Your Kicks, Our Care.</h2>
                                 </div>
                             </div>
                         </div>
@@ -31,7 +31,7 @@ const AboutOne = () => {
                                     <h2 className="section-title__title">Workshop cuci sepatu & tas terpercaya di Baki - Sukoharjo</h2>
                                 </div>
                                 <div className="about-one__content-inner">
-                                    <p className="about-one__content-text1">Kick Clean Gentan berdiri sejak 2018 dan kini menjadi mitra perawatan sepatu, tas, dan topi bagi komunitas sneaker di Gentan, Songgolangit, hingga wilayah Sukoharjo.</p>
+                                    <p className="about-one__content-text1">Kick Clean Gentan adalah mitra perawatan sepatu, tas, dan topi bagi komunitas sneaker di Gentan, Songgolangit, hingga wilayah Sukoharjo.</p>
                                     <p className="about-one__content-text2">Kami menggunakan chemical premium yang aman untuk bahan knit, suede, kulit, maupun canvas, serta memberikan update progres langsung lewat WhatsApp agar kamu merasa tenang.</p>
                                     <div className="about-one__content-list">
                                         <ul>

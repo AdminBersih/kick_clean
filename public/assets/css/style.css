@@ -622,7 +622,7 @@ ul {
     position: relative;
     display: block;
     background-color: #ffffff;
-    border-bottom: 1px solid #f1f1f1;
+    border-bottom: 1px solid #004a94 !important;
     z-index: 5;
 }
 
@@ -647,7 +647,7 @@ ul {
 .main-header__top-inner {
     position: relative;
     display: block;
-    padding: 4.5px 0px 5.5px;
+    padding: 4.5px 0px 0px;
     z-index: 1;
 }
 
@@ -1886,6 +1886,7 @@ a.sc-hLseeU {
     display: block;
     padding: 216px 0px 220px;
     z-index: 5;
+    max-width: 600px;
 }
 
 .main-slider-one__content .tagline {

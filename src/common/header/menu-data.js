@@ -18,7 +18,6 @@ const menu_data = [
       link: "#",
       sub_menus: [
         { link: "/service-one", title: "Jasa Kick Clean 01" },
-        { link: "/service-two", title: "Jasa Kick Clean 02" },
         { link: "/bedroom-cleaning", title: "Cuci Sepatu" },
         { link: "/window-cleaning", title: "Cuci Topi & Tas" },
         { link: "/office-cleaning", title: "Repaint Sepatu & Topi" },
@@ -34,18 +33,11 @@ const menu_data = [
       title: "Halaman",
       link: "#",
       sub_menus: [
-        { link: "/team", title: "Tim" },
-        { link: "/team-details", title: "Profil Tim" },
         { link: "/project", title: "Portofolio" },
         { link: "/project-details", title: "Detail Portofolio" },
-        { link: "/pricing", title: "Harga" },
-        { link: "/testimonial", title: "Testimoni" },
-        { link: "/gallery-one", title: "Galeri 01" },
         { link: "/gallery-two", title: "Galeri 02" },
         { link: "/gallery-details", title: "Detail Galeri" },
-        { link: "/client", title: "Klien" },
         { link: "/faq", title: "FAQ" },
-        { link: "/error", title: "404" },
       ],
     },
     {
