@@ -5,9 +5,6 @@ const AboutOne = () => {
     return (
         <>
             <section className="about-one pd-120-0-120">
-                <div className="about-one__img2 wow slideInRight" data-wow-delay="500ms">
-                    <img className="float-bob-x" src="/assets/images/about/about-v1-img2.png" alt="Kick Clean Gentan" />
-                </div>
                 <div className="container">
                     <div className="row">
                         {/* Start About One Img */}

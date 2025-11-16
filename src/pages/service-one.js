@@ -8,11 +8,11 @@ import FooterOne from "../common/footer/FooterOne";
 export default function ServicePageOne() {
 	return (
 		<>
-			<SEO pageTitle={"Jasa Kick Clean 01"} />
+			<SEO pageTitle={"Daftar Layanan Kick Clean"} />
 			<HeaderOne />
 			<Breadcrumb 
-                heading="Jasa Kick Clean 01"
-                currentPage="Jasa Kick Clean 01" 
+                heading="Daftar Layanan Kick Clean"
+                currentPage="Jasa Kick Clean" 
             />
 			<ServiceOne />
 			<CtaOne />

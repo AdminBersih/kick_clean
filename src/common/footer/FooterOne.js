@@ -52,11 +52,11 @@ const FooterOne = () => {
                                             <div className="footer-widget__column footer-widget__links mrt-60">
                                                 <h2 className="footer-widget__title">Layanan Populer</h2>
                                                 <ul className="footer-widget__links-list">
-                                                    <li className="footer-widget__links-list-item"><Link href="/bedroom-cleaning">Cuci Sepatu Premium</Link></li>
-                                                    <li className="footer-widget__links-list-item"><Link href="/window-cleaning">Cuci Topi & Tas</Link></li>
-                                                    <li className="footer-widget__links-list-item"><Link href="/office-cleaning">Repaint Sepatu & Topi</Link></li>
-                                                    <li className="footer-widget__links-list-item"><Link href="/commercial-cleaning">Reglue Sepatu</Link></li>
-                                                    <li className="footer-widget__links-list-item"><Link href="/house-cleaning">Treatment Anti Air</Link></li>
+                                                    <li className="footer-widget__links-list-item"><Link href="/cuci-sepatu">Cuci Sepatu (Shoes Treatment)</Link></li>
+                                                    <li className="footer-widget__links-list-item"><Link href="/special-treatment">Special Treatment Sepatu</Link></li>
+                                                    <li className="footer-widget__links-list-item"><Link href="/cuci-tas-dompet-koper">Cuci Tas, Dompet &amp; Koper</Link></li>
+                                                    <li className="footer-widget__links-list-item"><Link href="/baby-gear-cleaning">Baby Gear Cleaning</Link></li>
+                                                    <li className="footer-widget__links-list-item"><Link href="/helm-cap-cleaning">Cuci Helm &amp; Cap</Link></li>
                                                 </ul>
                                             </div>
                                         </div>

@@ -16,20 +16,22 @@ const ServiceOne = () => {
                 <div className="row">
                     {ServiceOneData.map((item) => (
                       <div key={item.id} className="col-xl-4 col-lg-4 col-md-6 wow fadeInLeft" data-wow-delay={item.delay} data-wow-duration={item.duration}>
-                          <div className="services-one__single">
-                              <div className="services-one__single-img">
-                                  <div className="services-one__single-img-inner">
-                                      <img className="parallax-img" src={item.image} alt={item.alt} />
-                                  </div>
-                                  <div className="icon">
-                                      <span className={item.icon}></span>
-                                  </div>
-                              </div>
-                              <div className="services-one__single-content text-center">
-                                  <h2><Link href={item.link}>{item.heading}</Link></h2>
-                                  <p>{item.description}</p>
-                              </div>
-                          </div>
+                          <Link href={item.link}>
+                            <div className="services-one__single">
+                                <div className="services-one__single-img">
+                                    <div className="services-one__single-img-inner">
+                                        <img className="parallax-img" src={item.image} alt={item.alt} />
+                                    </div>
+                                    <div className="icon">
+                                        <span className={item.icon}></span>
+                                    </div>
+                                </div>
+                                <div className="services-one__single-content text-center">
+                                    <h2>{item.heading}</h2>
+                                    <p>{item.description}</p>
+                                </div>
+                            </div>
+                          </Link>
                       </div>
                     ))}
                 </div>
