@@ -39,7 +39,7 @@ const CuciSepatu = () => {
                         <div className="col-xl-4 col-lg-5">
                             <div className="img-box">
                                 <img
-                                    src="/assets/images/resources/service-details-img2.jpg"
+                                    src="/assets/images/resources/service-details-img1.png"
                                     alt="Deep clean sepatu di Kick Clean Gentan"
                                 />
                             </div>

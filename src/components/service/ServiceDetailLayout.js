@@ -5,7 +5,7 @@ import { serviceSidebarLinks } from "@/data/service";
 const ServiceDetailLayout = ({
     children,
     activeSlug,
-    heroImage = "/assets/images/resources/service-details-img1.jpg",
+    heroImage = "/assets/images/resources/service-details-img1.png",
     heroAlt = "Layanan Kick Clean",
 }) => {
     return (

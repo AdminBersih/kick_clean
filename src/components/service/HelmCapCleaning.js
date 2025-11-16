@@ -37,7 +37,7 @@ const HelmCapCleaning = () => {
                         <div className="col-xl-4 col-lg-5">
                             <div className="img-box">
                                 <img
-                                    src="/assets/images/resources/service-details-img2.jpg"
+                                    src="/assets/images/resources/service-details-img1.png"
                                     alt="Cuci helm dan cap Kick Clean Gentan"
                                 />
                             </div>

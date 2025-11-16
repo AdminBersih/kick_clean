@@ -41,9 +41,9 @@ const ProjectOne = () => {
                         <div class="col-xl-4 col-lg-4 col-md-4 wow animated fadeInUp" data-wow-delay="0.1s">
                             <div class="projects-one__single">
                                 <div class="projects-one__single-img">
-                                    <img class="parallax-img" src="/assets/images/projects/projects-v1-img1.jpg" alt="" />
+                                    <img class="parallax-img" src="/assets/images/projects/projects-v1-img1.jpeg" alt="" />
                                     <div class="overlay-icon">
-                                        <a class="img-popup" href="/assets/images/projects/projects-v1-img1.jpg"><span
+                                        <a class="img-popup" href="/assets/images/projects/projects-v1-img1.jpeg"><span
                                                 class="icon-link"></span></a>
                                     </div>
                                 </div>

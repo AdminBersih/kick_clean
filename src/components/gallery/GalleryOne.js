@@ -99,7 +99,7 @@ const GalleryOne = () => {
                         <div class="col-xl-4 col-lg-4 col-md-6 filter-item sepatu treatment">
                             <div class="gallery-page__single wow fadeInUp" data-wow-delay="0ms" data-wow-duration="1500ms">
                                 <div class="gallery-page__single-img">
-                                    <img src="/assets/images/gallery/gallery-page-img1.jpg" alt="" />
+                                    <img src="/assets/images/gallery/gallery-page-img1.jpeg" alt="" />
                                     <div class="gallery-page__single-icon">
                                         <a class="img-popup" href="/assets/images/gallery/gallery-page-img1.jpg"><span class="icon-plus"></span></a>
                                     </div>
@@ -139,7 +139,7 @@ const GalleryOne = () => {
                         <div class="col-xl-4 col-lg-4 col-md-6 filter-item tas sepatu topi">
                             <div class="gallery-page__single wow fadeInUp" data-wow-delay="0ms" data-wow-duration="1500ms">
                                 <div class="gallery-page__single-img">
-                                    <img src="/assets/images/gallery/gallery-page-img4.jpg" alt="" />
+                                    <img src="/assets/images/gallery/gallery-page-img4.jpeg" alt="" />
                                     <div class="gallery-page__single-icon">
                                         <a class="img-popup" href="/assets/images/gallery/gallery-page-img4.jpg"><span class="icon-plus"></span></a>
                                     </div>
