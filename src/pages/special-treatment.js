@@ -11,6 +11,7 @@ export default function SpecialTreatmentPage() {
             <HeaderOne />
             <Breadcrumb heading="Special Treatment Sepatu" currentPage="Special Treatment" />
             <SpecialTreatment />
+            <ContactOne />
             <FooterOne />
         </>
     );

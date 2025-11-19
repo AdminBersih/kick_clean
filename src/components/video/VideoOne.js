@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import Link from 'next/link';
 import VideoBGOne from '../../../public/assets/images/backgrounds/video-v1-bg.jpg';
 
 const VideoOne = () => {
@@ -25,12 +26,12 @@ const VideoOne = () => {
                 <div class="container">
                     <div class="video-one__inner">
                         <div class="video-one__video-link">
-                            <a href="https://www.youtube.com/watch?v=Get7rqXYrbQ" class="video-popup">
+                            <Link href="https://www.youtube.com/watch?v=Get7rqXYrbQ" class="video-popup">
                                 <div class="video-one__video-icon">
                                     <span class="fa fa-play"></span>
                                     <i class="ripple"></i>
                                 </div>
-                            </a>
+                            </Link>
                         </div>
                     </div>
                 </div>

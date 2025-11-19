@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import BackgroundOne from '../../../public/assets/images/backgrounds/contact-v1-bg.jpg';
 
 const ContactOne = () => {
 
@@ -7,7 +6,7 @@ const ContactOne = () => {
         <>
         
         <section className="contact-one pd-120-0-120">
-            <div className="contact-one__bg jarallax" data-jarallax data-speed="0.2" data-imgPosition="50% 0%" style={{backgroundImage: `url(${BackgroundOne.src})`}}>
+            <div className="contact-one__bg jarallax" data-jarallax data-speed="0.2" data-imgPosition="50% 0%">
             </div>
             <div className="contact-one__img wow slideInRight" data-wow-delay="500ms" data-wow-duration="2500ms"><img src="/assets/images/resources/contact-v1-img1.png" alt="" /></div>
             <div className="container">
@@ -40,30 +39,7 @@ const ContactOne = () => {
                                     </div>
                                     <div className="col-xl-6 col-lg-6 col-md-6">
                                         <div className="input-box">
-                                            <div className="select-box">
-                                                <select className="selectmenu wide">
-                                                    <option selected="selected">Pilih layanan</option>
-                                                    <option>Cuci Sepatu Premium</option>
-                                                    <option>Cuci Topi & Tas</option>
-                                                    <option>Repaint Sepatu & Topi</option>
-                                                    <option>Reglue Sepatu</option>
-                                                    <option>Treatment Waterproof</option>
-                                                    <option>Antar Jemput</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="row">
-                                    <div className="col-xl-6 col-lg-6 col-md-6">
-                                        <div className="input-box">
-                                            <input type="text" name="form_subject" defaultValue="" placeholder="Alamat penjemputan / drop off" />
-                                        </div>
-                                    </div>
-                                    <div className="col-xl-6 col-lg-6 col-md-6">
-                                        <div className="input-box">
-                                            <input type="text" name="form_subject" defaultValue="" placeholder="Tanggal yang diinginkan" id="datepicker" />
+                                            <input type="text" name="form_subject" defaultValue="" placeholder="Alamat penjemputan" />
                                         </div>
                                     </div>
                                 </div>
@@ -72,7 +48,7 @@ const ContactOne = () => {
                                         <div className="button-box">
                                             <input id="form_botcheck" name="form_botcheck" className="form-control" type="hidden" defaultValue="" />
                                             <button className="thm-btn" type="submit" data-loading-text="Mohon tunggu...">
-                                                <span>Konfirmasi Jadwal</span>
+                                                <span>Konfirmasi</span>
                                                 <i className="liquid"></i>
                                             </button>
                                         </div>

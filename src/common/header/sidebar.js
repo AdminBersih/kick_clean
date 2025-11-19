@@ -30,17 +30,17 @@ const Sidebar = ({isActive, setIsActive}) => {
                 <ul className="mobile-nav__contact list-unstyled">
                     <li>
                         <i className="fa fa-map-marker-alt"></i>
-                        <a href="https://maps.app.goo.gl/8iqm6X6f6CzA3oZNA" target="_blank" rel="noreferrer">Jl. Raya Songgo Langit No.2 Gentan</a>
+                        <Link href="https://maps.app.goo.gl/8iqm6X6f6CzA3oZNA" target="_blank" rel="noreferrer">Jl. Raya Songgo Langit No.2 Gentan</Link>
                     </li>
                     <li>
                         <i className="fa fa-phone-alt"></i>
-                        <a href="https://wa.me/6285659176079" target="_blank" rel="noreferrer">0856-5917-6079 (WhatsApp)</a>
+                        <Link href="https://wa.me/6285659176079" target="_blank" rel="noreferrer">0856-5917-6079 (WhatsApp)</Link>
                     </li>
                 </ul>
                 <div className="mobile-nav__top">
                     <div className="mobile-nav__social">
-                        <a href="https://www.instagram.com/kickclean.gentan" className="fab fa-instagram" target="_blank" rel="noreferrer"></a>
-                        <a href="https://wa.me/6285659176079" className="fab fa-whatsapp" target="_blank" rel="noreferrer"></a>
+                        <Link href="https://www.instagram.com/kickclean.gentan" className="fab fa-instagram" target="_blank" rel="noreferrer"></Link>
+                        <Link href="https://wa.me/6285659176079" className="fab fa-whatsapp" target="_blank" rel="noreferrer"></Link>
                     </div>
                 </div>
         </div>

@@ -11,6 +11,7 @@ export default function HelmCapCleaningPage() {
             <HeaderOne />
             <Breadcrumb heading="Cuci Helm & Cap" currentPage="Cuci Helm & Cap" />
             <HelmCapCleaning />
+            <ContactOne />
             <FooterOne />
         </>
     );

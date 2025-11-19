@@ -11,6 +11,7 @@ export default function BabyGearCleaningPage() {
             <HeaderOne />
             <Breadcrumb heading="Baby Gear Cleaning" currentPage="Baby Gear Cleaning" />
             <BabyGearCleaning />
+            <ContactOne />
             <FooterOne />
         </>
     );
