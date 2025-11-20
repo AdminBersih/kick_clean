@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import dbConnect from "../../../lib/dbConnect";
 import User from "../../../models/User";
 import { signAccessToken, signRefreshToken } from "../../../lib/jwt";
+import { mergeGuestCartIntoUser } from "../../../lib/cart";
 import cookie from "cookie";
 
 export default async function handler(req, res) {
@@ -17,6 +18,12 @@ export default async function handler(req, res) {
 
   const match = await bcrypt.compare(password, user.passwordHash);
   if (!match) return res.status(400).json({ message: "Invalid credentials" });
+
+  const sessionId = req.cookies.sessionId;
+
+  if (sessionId) {
+    await mergeGuestCartIntoUser(sessionId, user._id.toString());
+  }
 
   const accessToken = signAccessToken({ id: user._id, role: user.role });
   const refreshToken = signRefreshToken({ id: user._id });
