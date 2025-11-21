@@ -3,6 +3,7 @@ import { animationCreate } from "../../utils/utils";
 import ScrollToTop from "react-scroll-to-top";
 import { FaAngleUp } from 'react-icons/fa';
 import Head from "next/head";
+import '@/styles/admin.css';
 
 function MyApp({ Component, pageProps }) {
     useEffect(() => {
