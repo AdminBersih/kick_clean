@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Link from 'next/link';
 import Modal from 'react-bootstrap/Modal';
 
 const SearchButton = () => {
@@ -8,7 +9,7 @@ const SearchButton = () => {
     const handleShow = () => setShow(true);
     return (
         <>
-            <a href="#" className="main-menu__search search-toggler icon-search-interface-symbol" variant="primary" onClick={handleShow}></a>
+            <Link href="#" className="main-menu__search search-toggler icon-search-interface-symbol" variant="primary" onClick={handleShow}></Link>
             <div className="search-popup">
                 <Modal show={show} onHide={handleClose} className="search-overlay">
                     <form action="#">

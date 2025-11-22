@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { TeamThreeData } from '@/data/team';
 
 const TeamThree = () => {
@@ -22,9 +23,9 @@ const TeamThree = () => {
                                                 <p>{item.position}</p>
                                             </div>
                                             <div className="social-link">
-                                                <a href={item.facebook}><i className="fab fa-facebook"></i></a>
-                                                <a href={item.twitter}><i className="fab fa-twitter"></i></a>
-                                                <a href={item.pinterest}><i className="fab fa-pinterest-p"></i></a>
+                                                <Link href={item.facebook}><i className="fab fa-facebook"></i></Link>
+                                                <Link href={item.twitter}><i className="fab fa-twitter"></i></Link>
+                                                <Link href={item.pinterest}><i className="fab fa-pinterest-p"></i></Link>
                                             </div>
                                         </div>
                                     </div>

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import Link from 'next/link';
 
 const WhyChooseUsOne = () => {
     useEffect(() => {
@@ -86,12 +87,12 @@ const WhyChooseUsOne = () => {
                                         <div className="tab-one__img">
                                             <img src="/assets/images/resources/tab-v1-img.jpg" alt="" />
                                             <div className="icon">
-                                                <a href="https://www.youtube.com/watch?v=Get7rqXYrbQ" className="video-popup">
+                                                <Link href="https://www.youtube.com/watch?v=Get7rqXYrbQ" className="video-popup">
                                                     <div className="tab-one__video-icon">
                                                         <span className="icon-play-button"></span>
                                                         <i className="ripple"></i>
                                                     </div>
-                                                </a>
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>
@@ -123,12 +124,12 @@ const WhyChooseUsOne = () => {
                                         <div className="tab-one__img">
                                             <img src="/assets/images/resources/tab-v1-img.jpg" alt="" />
                                             <div className="icon">
-                                                <a href="https://www.youtube.com/watch?v=Get7rqXYrbQ" className="video-popup">
+                                                <Link href="https://www.youtube.com/watch?v=Get7rqXYrbQ" className="video-popup">
                                                     <div className="tab-one__video-icon">
                                                         <span className="icon-play-button"></span>
                                                         <i className="ripple"></i>
                                                     </div>
-                                                </a>
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>
@@ -160,12 +161,12 @@ const WhyChooseUsOne = () => {
                                         <div className="tab-one__img">
                                             <img src="/assets/images/resources/tab-v1-img.jpg" alt="" />
                                             <div className="icon">
-                                                <a href="https://www.youtube.com/watch?v=Get7rqXYrbQ" className="video-popup">
+                                                <Link href="https://www.youtube.com/watch?v=Get7rqXYrbQ" className="video-popup">
                                                     <div className="tab-one__video-icon">
                                                         <span className="icon-play-button"></span>
                                                         <i className="ripple"></i>
                                                     </div>
-                                                </a>
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>
@@ -197,12 +198,12 @@ const WhyChooseUsOne = () => {
                                         <div className="tab-one__img">
                                             <img src="/assets/images/resources/tab-v1-img.jpg" alt="" />
                                             <div className="icon">
-                                                <a href="https://www.youtube.com/watch?v=Get7rqXYrbQ" className="video-popup">
+                                                <Link href="https://www.youtube.com/watch?v=Get7rqXYrbQ" className="video-popup">
                                                     <div className="tab-one__video-icon">
                                                         <span className="icon-play-button"></span>
                                                         <i className="ripple"></i>
                                                     </div>
-                                                </a>
+                                                </Link>
                                             </div>
                                         </div>
                                     </div>

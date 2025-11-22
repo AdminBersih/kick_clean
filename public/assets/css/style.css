@@ -3254,6 +3254,10 @@ div[class^="bubble-"] {
     padding: 52px 0px 26px;
 }
 
+.services-one__single-content.text-center button{
+    margin: 10px auto;
+}
+
 .services-one__single-content h2 {
     font-size: 24px;
     line-height: 34px;
@@ -4228,7 +4232,7 @@ div[class^="bubble-"] {
     position: relative;
     display: block;
     line-height: 0;
-    padding-left: 20px;
+    padding-left: 0px;
 }
 
 .testimonials-one__single .client-info .text h2 {
@@ -5779,7 +5783,6 @@ div[class^="bubble-"] {
 .faq-one-accrodion .accrodion-content .inner {
     position: relative;
     display: block;
-    padding-left: 160px;
 }
 
 .faq-one-accrodion .accrodion-content .inner .img-box {
@@ -6818,7 +6821,7 @@ div[class^="bubble-"] {
     position: relative;
     display: block;
     background: #ffffff;
-    padding: 120px 0px 0px;
+    padding: 120px 0px 120px;
 }
 
 .service-details__top {
@@ -6879,6 +6882,7 @@ div[class^="bubble-"] {
     position: relative;
     display: block;
     overflow: hidden;
+    margin-bottom: 20px;
 }
 
 .service-details__sidebar-list-item {
@@ -6938,7 +6942,6 @@ div[class^="bubble-"] {
 .service-details__bottom {
     position: relative;
     display: block;
-    margin-top: 60px;
 }
 
 .service-details__bottom-title {
@@ -6953,10 +6956,18 @@ div[class^="bubble-"] {
 .service-details__bottom-text1 {
     position: relative;
     display: block;
+    margin: 15px 0px 35px;
 }
 
-.service-details__bottom-text1 p {
+.service-details__bottom-text1-p {
     margin: 0;
+    font-weight: 600;
+}
+
+.service-details__sidebar-1{
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .service-details__bottom-text2 {
@@ -8393,11 +8404,73 @@ div[class^="bubble-"] {
 }
 
 .comment-form__textarea {
-    height: 150px;
+    height: 50px;
+    width: 80px;
 }
 
 .comment-form__btn {
     border: none;
+}
+
+.comment-form__input-box input,
+.comment-form__input-box textarea,
+.comment-form__input-box select,
+.comment-form__textarea {
+    border: 2px solid #dfe6ee;
+    background: #f7f9fb;
+    color: var(--thm-gray);
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 10px;
+}
+
+.comment-form__input-box input:focus,
+.comment-form__input-box textarea:focus,
+.comment-form__input-box select:focus,
+.comment-form__textarea:focus {
+    border-color: var(--thm-base);
+    background: #ffffff;
+}
+
+.sidebar__category-list input[type="radio"],
+.sidebar__category-list input[type="checkbox"] {
+    accent-color: var(--thm-base);
+    width: 16px;
+    height: 16px;
+}
+
+.sidebar__category-list {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar__category-list li {
+    padding: 12px 14px;
+    border: 1px solid #e6edf5;
+    border-radius: 10px;
+    background: #ffffff;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.sidebar__category-list label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    color: var(--thm-gray);
+    margin: 0;
+}
+
+.sidebar__title {
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.sidebar__category+.sidebar__category {
+    margin-top: 20px;
 }
 
 
@@ -8511,9 +8584,11 @@ div[class^="bubble-"] {
 .sidebar__category {
     position: relative;
     display: block;
-    background-color: rgba(var(--thm-base-rgb), .03);
-    padding: 35px 40px 40px;
-    border-radius: var(--thm-bdr-radius);
+    background-color: #f8fafc;
+    padding: 28px 30px 30px;
+    border-radius: 12px;
+    border: 1px solid #e6edf5;
+    box-shadow: 0 10px 30px rgba(5, 41, 68, 0.05);
 }
 
 .sidebar__category-list {
@@ -8521,7 +8596,7 @@ div[class^="bubble-"] {
 }
 
 .sidebar__category-list li+li {
-    margin-top: 20px;
+    margin-top: 12px;
 }
 
 .sidebar__category-list li a {

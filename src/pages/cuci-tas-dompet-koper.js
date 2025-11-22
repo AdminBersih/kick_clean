@@ -11,6 +11,7 @@ export default function TasDompetKoperPage() {
             <HeaderOne />
             <Breadcrumb heading="Cuci Tas, Dompet & Koper" currentPage="Cuci Tas &amp; Koper" />
             <TasDompetKoper />
+            <ContactOne />
             <FooterOne />
         </>
     );

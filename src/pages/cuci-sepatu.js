@@ -11,6 +11,7 @@ export default function CuciSepatuPage() {
             <HeaderOne />
             <Breadcrumb heading="Cuci Sepatu (Shoes Treatment)" currentPage="Cuci Sepatu" />
             <CuciSepatu />
+            <ContactOne />
             <FooterOne />
         </>
     );
