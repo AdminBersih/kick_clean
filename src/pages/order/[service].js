@@ -17,21 +17,22 @@ export default function OrderPage({ serviceSlug, serviceHeading }) {
     );
 }
 
-export async function getStaticPaths() {
-    const paths = ServiceOneData.map((item) => ({
-        params: { service: item.slug },
-    }));
-
-    return { paths, fallback: false };
-}
-
-export async function getStaticProps({ params }) {
+export async function getServerSideProps({ params }) {
     const serviceItem = ServiceOneData.find((item) => item.slug === params.service);
+
+    if (!serviceItem) {
+        return {
+            redirect: {
+                destination: "/service-pick",
+                permanent: false,
+            },
+        };
+    }
 
     return {
         props: {
             serviceSlug: params.service,
-            serviceHeading: serviceItem?.heading || "Layanan Kick Clean",
+            serviceHeading: serviceItem.heading,
         },
     };
 }

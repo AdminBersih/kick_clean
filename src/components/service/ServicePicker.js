@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { ServiceOneData } from "@/data/service";
+import { ServiceCategoryCards } from "@/data/service";
 import BackgroundOne from "../../../public/assets/images/pattern/services-v1-pattern.png";
 
 const ServicePicker = () => {
@@ -13,7 +13,7 @@ const ServicePicker = () => {
                     <h2 className="section-title__title">Lanjutkan pemesanan sesuai kebutuhanmu</h2>
                 </div>
                 <div className="row">
-                    {ServiceOneData.map((item) => (
+                    {ServiceCategoryCards.map((item) => (
                         <div
                             key={item.id}
                             className="col-xl-4 col-lg-4 col-md-6 wow fadeInLeft"
@@ -33,7 +33,13 @@ const ServicePicker = () => {
                                     <div className="services-one__single-content text-center">
                                         <h2>{item.heading}</h2>
                                         <p>{item.description}</p>
-                                        <span className="services-one__single-link">Pilih layanan ini</span>
+                                        <button
+                                            type="button"
+                                            className="thm-btn"
+                                        >
+                                            <span>Pilih layanan ini</span>
+                                            <i className="liquid"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </Link>

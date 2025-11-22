@@ -14,15 +14,17 @@ const ContactInfo = () => {
                             data-wow-duration="1500ms"
                         >
                             <div className="contact-box__single text-center">
-                                <div className="contact-box__single-icon">
-                                    {/* ganti ikon di sini */}
-                                    <span className="fa fa-edit"></span>
-                                </div>
-                                <div className="contact-box__single-text">
-                                    <h2><Link href="#">Isi Form</Link></h2>
-                                    <p>Lengkapi form order online dengan nama, nomor WhatsApp,</p>
-                                    <p>alamat lengkap, serta jadwal pickup / drop-off barangmu.</p>
-                                </div>
+                                <Link href="/#contact-one">
+                                    <div className="contact-box__single-icon">
+                                        {/* ganti ikon di sini */}
+                                        <span className="fa fa-edit"></span>
+                                    </div>
+                                    <div className="contact-box__single-text">
+                                        <h2>Isi Form</h2>
+                                        <p>Lengkapi form order online dengan nama, nomor WhatsApp,</p>
+                                        <p>alamat lengkap, serta jadwal pickup / drop-off barangmu.</p>
+                                    </div>
+                                </Link>
                             </div>
                         </div>
                         {/* End Step 1 */}
@@ -34,15 +36,17 @@ const ContactInfo = () => {
                             data-wow-duration="1500ms"
                         >
                             <div className="contact-box__single text-center">
-                                <div className="contact-box__single-icon">
-                                    <span className="fa fa-th-list"></span>
-                                </div>
-                                <div className="contact-box__single-text">
-                                    <h2><Link href="#">Pilih Layanan Jasa</Link></h2>
-                                    <p>Pilih jenis treatment: Cuci Sepatu, Special Treatment,</p>
-                                    <p>Tas &amp; Koper, Baby Gear, atau Helm &amp; Cap. Tim kami akan
-                                        bantu rekomendasikan paket yang paling pas.</p>
-                                </div>
+                                <Link href="/service-one">
+                                    <div className="contact-box__single-icon">
+                                        <span className="fa fa-th-list"></span>
+                                    </div>
+                                    <div className="contact-box__single-text">
+                                        <h2>Pilih Layanan Jasa</h2>
+                                        <p>Pilih jenis treatment: Cuci Sepatu, Special Treatment,</p>
+                                        <p>Tas &amp; Koper, Baby Gear, atau Helm &amp; Cap. Tim kami akan
+                                            bantu rekomendasikan paket yang paling pas.</p>
+                                    </div>
+                                </Link>
                             </div>
                         </div>
                         {/* End Step 2 */}
@@ -58,7 +62,7 @@ const ContactInfo = () => {
                                     <span className="fa fa-credit-card"></span>
                                 </div>
                                 <div className="contact-box__single-text">
-                                    <h2><Link href="#">Pembayaran</Link></h2>
+                                    <h2>Pembayaran</h2>
                                     <p>Lakukan pembayaran via transfer bank, QRIS,</p>
                                     <p>atau tunai saat pengambilan. Detail biaya &amp; status order
                                         akan dikirim lewat WhatsApp.</p>

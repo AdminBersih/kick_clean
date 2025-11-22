@@ -4,10 +4,9 @@ export const serviceSidebarLinks = [
     { href: "/cuci-tas-dompet-koper", label: "Cuci Tas, Dompet & Koper" },
     { href: "/baby-gear-cleaning", label: "Baby Gear Cleaning" },
     { href: "/helm-cap-cleaning", label: "Cuci Helm & Cap" },
-    { href: "/antar-jemput", label: "Antar Jemput & FREE DELIVERY" },
 ];
 
-//Service One
+// Cards untuk landing layanan (tanpa antar jemput)
 export const ServiceOneData = [
     {
         id: 1,
@@ -69,59 +68,132 @@ export const ServiceOneData = [
         delay: "400ms",
         duration: "1500ms",
     },
+];
+
+export const ServiceCategoryCards = [
     {
-        id: 6,
+        id: "shoes-treatment",
+        slug: "cuci-sepatu",
+        heading: "Shoes Treatment",
+        description: "Cuci sepatu harian hingga material khusus dengan paket Lite sampai Suede Treatment.",
+        image: "/assets/images/services/services-v1-img1.png",
+        icon: "icon-house",
+        link: "/cuci-sepatu",
+        alt: "Shoes treatment Kick Clean",
+        delay: "0ms",
+        duration: "1500ms",
+    },
+    {
+        id: "special-treatment",
+        slug: "special-treatment",
+        heading: "Special Treatment",
+        description: "Express, repaint, reglue, hingga un-yellowing untuk sepatu favoritmu.",
+        image: "/assets/images/services/services-v1-img2.png",
+        icon: "icon-flat",
+        link: "/special-treatment",
+        alt: "Special treatment Kick Clean",
+        delay: "100ms",
+        duration: "1500ms",
+    },
+    {
+        id: "other-treatment",
+        slug: "cuci-tas-dompet-koper",
+        heading: "Other Treatment",
+        description: "Tas, koper, baby gear, helm & cap dengan perawatan aman sesuai material.",
+        image: "/assets/images/services/services-v1-img3.png",
         icon: "icon-window-cleaning",
-        image: "/assets/images/services/services-v1-img6.png",
-        alt: "Antar jemput Kick Clean",
-        heading: "Antar Jemput & FREE DELIVERY",
-        description: "Pickup & delivery gratis area Gentan dan sekitarnya, praktis tanpa harus ke outlet.",
-        slug: "antar-jemput",
-        link: "/antar-jemput",
-        delay: "500ms",
+        link: "/cuci-tas-dompet-koper",
+        alt: "Other treatment Kick Clean",
+        delay: "200ms",
         duration: "1500ms",
     },
 ];
 
-export const ServicePricingOptions = {
-    "cuci-sepatu": [
-        { id: "lite", label: "Lite Clean - Rp30.000", price: 30000, note: "Upper & midsole, selesai 2 hari" },
-        { id: "deep", label: "Deep Clean - Rp35.000", price: 35000, note: "Upper-midsole-outsole, 3-4 hari" },
-        { id: "white", label: "White Shoes - Rp40.000", price: 40000, note: "Khusus sepatu putih, 3-4 hari" },
-        { id: "women-kids", label: "Women & Kids - Rp30.000", price: 30000, note: "Untuk size < 35 & sepatu wanita" },
-        { id: "boots", label: "Boots & Outdoors - Rp50.000", price: 50000, note: "Boots/outdoor, 4-6 hari" },
-        { id: "suede", label: "Suede Treatment - Rp55.000", price: 55000, note: "Suede & nubuck, 3-4 hari" },
-        { id: "skate", label: "Sepatu Roda - Rp50.000", price: 50000, note: "Paket cuci sepatu roda" },
-    ],
+export const servicesCatalog = [
+    { name: "Lite Clean", category: "Shoes Treatment", price: 30000, duration: "2 hari", description: "Cuci sepatu bagian upper dan midsole." },
+    { name: "Deep Clean", category: "Shoes Treatment", price: 35000, duration: "3-4 hari", description: "Cuci bersih semua bagian sepatu seperti outsole, midsole, insole, tali sepatu." },
+    { name: "White Shoes", category: "Shoes Treatment", price: 40000, duration: "3-4 hari", description: "Cuci bersih semua bagian sepatu berwarna putih." },
+    { name: "Women & Kids", category: "Shoes Treatment", price: 30000, duration: "2-3 hari", description: "Cuci bersih sepatu anak (size <35) dan sepatu wanita." },
+    { name: "Boots & Outdoors", category: "Shoes Treatment", price: 50000, duration: "4-6 hari", description: "Menghilangkan noda lumpur atau basah pada sepatu." },
+    { name: "Suede Treatment", category: "Shoes Treatment", price: 55000, duration: "3-4 hari", description: "Cuci sepatu berbahan suede leather dan nubuck." },
+    { name: "Sepatu Roda", category: "Shoes Treatment", price: 50000, duration: "3-4 hari", description: "Cuci sepatu roda." },
+    { name: "OneDay Service", category: "Special Treatment", price: 45000, duration: "24 jam", description: "Cuci bersih seluruh bagian sepatu, selesai dalam 24 jam." },
+    { name: "Express Service", category: "Special Treatment", price: 50000, duration: "6 jam", description: "Cuci bersih seluruh bagian sepatu, selesai dalam 6 jam." },
+    { name: "Premium Clean", category: "Special Treatment", price: 60000, duration: "3-4 hari", description: "Cuci bersih sepatu menggunakan cleaner premium (Jason Mark / Creep)." },
+    { name: "Un-Yellowing Midsole", category: "Special Treatment", price: 65000, duration: "3-4 hari", description: "Menghilangkan warna kuning pada midsole, termasuk Fast Clean." },
+    { name: "Reglue", category: "Special Treatment", price: 35000, duration: "3-4 hari", description: "Lem ulang midsole/outsole sepatu, termasuk Lite Clean." },
+    { name: "Repaint Suede", category: "Special Treatment", price: 100000, duration: "3-4 hari", description: "Repaint semua jenis sepatu suede, termasuk Deep Clean." },
+    { name: "Repaint Canvas, Mesh, Leather", category: "Special Treatment", price: 80000, duration: "3-4 hari", description: "Repaint canvas, mesh, dan leather, termasuk Deep Clean." },
+    { name: "Bag & Wallet - Small", category: "Other Treatment", price: 30000, duration: "2-3 hari", description: "Treatment tas kecil dan dompet." },
+    { name: "Bag & Wallet - Medium", category: "Other Treatment", price: 40000, duration: "2-3 hari", description: "Treatment tas ukuran medium." },
+    { name: "Bag & Wallet - Large", category: "Other Treatment", price: 50000, duration: "2-3 hari", description: "Treatment tas ukuran besar." },
+    { name: "Tas Gunung", category: "Other Treatment", price: 55000, duration: "2-3 hari", description: "Treatment tas gunung." },
+    { name: "Koper - Small", category: "Other Treatment", price: 60000, duration: "Maks. 7 hari", description: "Treatment koper kecil." },
+    { name: "Koper - Medium", category: "Other Treatment", price: 70000, duration: "Maks. 7 hari", description: "Treatment koper ukuran medium." },
+    { name: "Koper - Large", category: "Other Treatment", price: 80000, duration: "Maks. 7 hari", description: "Treatment koper besar." },
+    { name: "Stroller", category: "Other Treatment", price: 100000, duration: "4-6 hari", description: "Treatment stroller bayi." },
+    { name: "Bouncer", category: "Other Treatment", price: 80000, duration: "4-6 hari", description: "Treatment bouncer bayi." },
+    { name: "Car Seat", category: "Other Treatment", price: 70000, duration: "4-6 hari", description: "Treatment car seat bayi." },
+    { name: "Helm", category: "Other Treatment", price: 40000, duration: "3-5 hari", description: "Treatment helm." },
+    { name: "Cap", category: "Other Treatment", price: 25000, duration: "1 hari", description: "Treatment cap/topi." },
+];
+
+const slugToNames = {
+    "cuci-sepatu": ["Lite Clean", "Deep Clean", "White Shoes", "Women & Kids", "Boots & Outdoors", "Suede Treatment", "Sepatu Roda"],
     "special-treatment": [
-        { id: "oneday", label: "OneDay Service - Rp45.000", price: 45000, note: "Jadi dalam 24 jam" },
-        { id: "express", label: "Express Service - Rp50.000", price: 50000, note: "Jadi dalam 6 jam" },
-        { id: "premium", label: "Premium Clean - Rp60.000", price: 60000, note: "Cleaner premium Jason Mark / Crep" },
-        { id: "unyellow", label: "Un-Yellowing Midsole - Rp65.000", price: 65000, note: "Mulai dari Rp65.000, termasuk fast clean" },
-        { id: "reglue", label: "Reglue - Rp35.000", price: 35000, note: "Mulai dari Rp35.000 termasuk Lite Clean" },
-        { id: "repaint-suede", label: "Repaint Suede - Rp100.000", price: 100000, note: "Termasuk Deep Clean Shoe" },
-        { id: "repaint-canvas", label: "Repaint Canvas/Mesh/Leather - Rp80.000", price: 80000, note: "Mulai dari Rp80.000 termasuk Deep Clean" },
+        "OneDay Service",
+        "Express Service",
+        "Premium Clean",
+        "Un-Yellowing Midsole",
+        "Reglue",
+        "Repaint Suede",
+        "Repaint Canvas, Mesh, Leather",
     ],
     "cuci-tas-dompet-koper": [
-        { id: "bag-small", label: "Small (Dompet/Pouch) - Rp30.000", price: 30000, note: "Dompet & pouch kecil" },
-        { id: "bag-medium", label: "Medium (Sling/Handbag) - Rp40.000", price: 40000, note: "Tas selempang / handbag" },
-        { id: "bag-large", label: "Large (Tote/Backpack) - Rp50.000", price: 50000, note: "Tas kerja / backpack standar" },
-        { id: "bag-hike", label: "Tas Gunung - Rp55.000", price: 55000, note: "Carrier & tas outdoor" },
-        { id: "koper-small", label: "Koper Small - Rp60.000", price: 60000, note: "Koper kabin kecil" },
-        { id: "koper-medium", label: "Koper Medium - Rp70.000", price: 70000, note: "Koper ukuran sedang" },
-        { id: "koper-large", label: "Koper Large - Rp80.000", price: 80000, note: "Koper besar" },
+        "Bag & Wallet - Small",
+        "Bag & Wallet - Medium",
+        "Bag & Wallet - Large",
+        "Tas Gunung",
+        "Koper - Small",
+        "Koper - Medium",
+        "Koper - Large",
     ],
-    "baby-gear-cleaning": [
-        { id: "stroller", label: "Stroller - Rp100.000", price: 100000, note: "4-6 hari pengerjaan" },
-        { id: "bouncer", label: "Bouncer - Rp80.000", price: 80000, note: "4-6 hari pengerjaan" },
-        { id: "carseat", label: "Car Seat - Rp70.000", price: 70000, note: "4-6 hari pengerjaan" },
-    ],
-    "helm-cap-cleaning": [
-        { id: "helmet", label: "Helm - Rp40.000", price: 40000, note: "3-5 hari pengerjaan" },
-        { id: "cap", label: "Cap/Topi - Rp25.000", price: 25000, note: "1 hari pengerjaan" },
-    ],
-    "antar-jemput": [
-        { id: "pickup-free", label: "Gratis Pickup & Delivery (Area Gentan)", price: 0, note: "Gratis 5-7 km, detail dicek admin" },
-        { id: "pickup-confirm", label: "Pickup & Delivery - Konfirmasi Admin", price: 0, note: "Biaya menyesuaikan lokasi di atas 7 km" },
-    ],
+    "baby-gear-cleaning": ["Stroller", "Bouncer", "Car Seat"],
+    "helm-cap-cleaning": ["Helm", "Cap"],
 };
+
+const makeId = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+export const ServicePricingOptions = Object.entries(slugToNames).reduce((acc, [slug, names]) => {
+    acc[slug] = names
+        .map((name) => servicesCatalog.find((item) => item.name === name))
+        .filter(Boolean)
+        .map((item) => ({
+            id: makeId(item.name),
+            name: item.name,
+            label: `${item.name} - Rp${item.price.toLocaleString("id-ID")}`,
+            price: item.price,
+            note: `${item.duration} · ${item.description}`,
+        }));
+    return acc;
+}, {});
+
+export const OtherTreatmentGroups = [
+    {
+        id: "bag-wallet",
+        label: "Bag & Wallet",
+        names: ["Bag & Wallet - Small", "Bag & Wallet - Medium", "Bag & Wallet - Large"],
+    },
+    {
+        id: "tas-gunung",
+        label: "Tas Gunung",
+        names: ["Tas Gunung"],
+    },
+    {
+        id: "koper",
+        label: "Koper",
+        names: ["Koper - Small", "Koper - Medium", "Koper - Large"],
+    },
+];
+
+export default servicesCatalog;
