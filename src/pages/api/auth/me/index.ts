@@ -1,6 +1,8 @@
-import dbConnect from "../../../lib/dbConnect";
-import User from "../../../models/User";
-import { getUserFromRequest } from "../../../lib/auth";
+import dbConnect from "../../../../lib/dbConnect";
+import User from "../../../../models/User";
+import { getUserFromRequest } from "../../../../lib/auth";
+
+export const runtime = "nodejs";
 
 export default async function handler(req, res) {
   await dbConnect();

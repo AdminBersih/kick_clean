@@ -1,4 +1,3 @@
-// pages/api/orders/user.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "../../../lib/dbConnect";
 import Order from "../../../models/Order";
