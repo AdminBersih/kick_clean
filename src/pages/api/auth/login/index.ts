@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   const refreshToken = signRefreshToken({ id: user._id });
 
   res.setHeader("Set-Cookie",
-    serialize("refreshToken", refreshToken, {
+    cookie.serialize("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
