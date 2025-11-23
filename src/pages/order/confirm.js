@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import SEO from "../../common/seo/Seo";
 import HeaderOne from "../../common/header/HeaderOne";
@@ -185,7 +185,7 @@ export default function OrderConfirmPage() {
                 markerRef.current = null;
             }
         };
-    }, [step]);
+    }, [location.lat, location.lng, step]);
 
     useEffect(() => {
         if (!mapReady || !mapRef.current || !markerRef.current) return;
@@ -288,7 +288,7 @@ export default function OrderConfirmPage() {
         return items;
     };
 
-    const loadCartSnapshot = async () => {
+    const loadCartSnapshot = useCallback(async () => {
         try {
             setCartLoading(true);
             const res = await fetchCart({ sessionId, token: accessToken });
@@ -300,12 +300,12 @@ export default function OrderConfirmPage() {
         } finally {
             setCartLoading(false);
         }
-    };
+    }, [accessToken, sessionId]);
 
     useEffect(() => {
         if (step !== 3) return;
         loadCartSnapshot();
-    }, [step]);
+    }, [loadCartSnapshot, step]);
 
     const renderSteps = () => (
         <div className="counter-one">
