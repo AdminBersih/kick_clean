@@ -1,7 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { SESSION_KEY } from "@/lib/cartClient";
 
 const API_BASE = process.env.NEXT_PUBLIC_BASE_URL || "";
 const ACCESS_TOKEN_KEY = "kickclean-access-token";
+const LOGOUT_FLAG_KEY = "kickclean-logout-flag";
 
 const noop = async () => ({ success: false });
 
@@ -27,8 +29,19 @@ export const AuthProvider = ({ children }) => {
     if (typeof window === "undefined") return;
     if (token) {
       localStorage.setItem(ACCESS_TOKEN_KEY, token);
+      localStorage.removeItem(LOGOUT_FLAG_KEY);
     } else {
       localStorage.removeItem(ACCESS_TOKEN_KEY);
+    }
+  }, []);
+
+  const clearSessionId = useCallback(() => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.removeItem(SESSION_KEY);
+      document.cookie = "sessionId=; path=/; max-age=0";
+    } catch {
+      // ignore clear errors
     }
   }, []);
 
@@ -72,6 +85,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const stored = localStorage.getItem(ACCESS_TOKEN_KEY);
+      const loggedOut = localStorage.getItem(LOGOUT_FLAG_KEY);
 
       try {
         if (stored) {
@@ -82,6 +96,12 @@ export const AuthProvider = ({ children }) => {
           } catch (err) {
             // Stored token invalid, try refresh flow next
           }
+        }
+
+        if (loggedOut) {
+          persistToken(null);
+          setUser(null);
+          return;
         }
 
         const newToken = await refreshAccess();
@@ -168,8 +188,16 @@ export const AuthProvider = ({ children }) => {
     } finally {
       persistToken(null);
       setUser(null);
+      clearSessionId();
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem(LOGOUT_FLAG_KEY, "1");
+        } catch {
+          // ignore storage errors
+        }
+      }
     }
-  }, [persistToken]);
+  }, [clearSessionId, persistToken]);
 
   const value = useMemo(
     () => ({

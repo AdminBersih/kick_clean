@@ -1,6 +1,6 @@
 import { NextApiRequest } from "next";
 import { verifyAccessToken, verifyRefreshToken } from "./jwt";
-import cookie from "cookie";
+import { parse as parseCookie } from "cookie";
 
 export function getTokenFromHeader(req: NextApiRequest) {
   const auth = req.headers.authorization;
@@ -10,10 +10,8 @@ export function getTokenFromHeader(req: NextApiRequest) {
 }
 
 export function getTokenFromCookie(req: NextApiRequest) {
-  if (!req.headers.cookie) return null;
-
-  const cookies = cookie.parse(req.headers.cookie);
-  
+  if (!req?.headers?.cookie) return null;
+  const cookies = parseCookie(req.headers.cookie);
   return cookies.refreshToken ?? null;
 }
 
