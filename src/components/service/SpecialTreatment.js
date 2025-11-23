@@ -71,91 +71,91 @@ const SpecialTreatment = () => {
                     </div>
                 </div>
 
-                <div className="service-details__bottom-text4">
-                    <h3 className="service-details__bottom-subtitle">Pilihan Special Treatment</h3>
+            </div>
+            <div className="service-details__bottom-text4">
+                <h3 className="service-details__bottom-subtitle">Pilihan Special Treatment</h3>
 
-                    <ServiceAccordion
-                        items={[
-                            {
-                                title: "OneDay Service – Rp45.000 (jadi dalam 24 jam)",
-                                content: (
-                                    <p>
-                                        Cuci bersih seluruh bagian sepatu dengan prioritas pengerjaan khusus. Cocok
-                                        untuk kamu yang butuh sepatu bersih besok hari – misalnya untuk kerja, event,
-                                        atau jalan-jalan.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Express Service – Rp50.000 (jadi dalam 6 jam)",
-                                content: (
-                                    <p>
-                                        Pilihan terbaik kalau kamu benar-benar dikejar waktu. Sepatu dibersihkan
-                                        menyeluruh dan dikerjakan ekstra cepat tanpa mengorbankan kebersihan.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Premium Clean – Rp60.000",
-                                content: (
-                                    <p>
-                                        Paket cuci premium menggunakan cleaner dengan brand ternama seperti Jason Mark
-                                        / Crep*. Direkomendasikan untuk sepatu dengan material sensitif atau sepatu
-                                        branded yang ingin diperlakukan lebih eksklusif. (*Brand dapat disesuaikan stok
-                                        di outlet.)
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Un-Yellowing Midsole – mulai dari Rp65.000",
-                                content: (
-                                    <p>
-                                        Treatment khusus untuk mengurangi warna kuning yang muncul pada bagian midsole
-                                        sepatu. Sudah termasuk Fast Clean sepatu, sehingga kamu mendapatkan midsole yang
-                                        lebih cerah sekaligus sepatu yang lebih bersih. Hasil akhir sangat dipengaruhi
-                                        oleh usia dan kondisi awal sepatu.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Reglue – mulai dari Rp35.000",
-                                content: (
-                                    <p>
-                                        Lem ulang pada bagian midsole atau outsole yang mulai terlepas. Sudah termasuk
-                                        <em> Lite Clean Shoe</em>, sehingga sepatu tidak hanya kuat kembali tapi juga
-                                        lebih rapi saat dipakai.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Repaint Suede – Rp100.000",
-                                content: (
-                                    <p>
-                                        Repaint khusus bahan suede, termasuk <em>Deep Clean Shoe</em>. Warna yang pudar
-                                        akan dikembalikan sedekat mungkin ke warna aslinya, dengan teknik aplikasi yang
-                                        menyesuaikan karakter suede agar tidak menggumpal.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Repaint Canvas, Mesh, Leather – mulai dari Rp80.000",
-                                content: (
-                                    <p>
-                                        Repaint untuk semua jenis canvas, mesh, dan leather, sudah termasuk
-                                        <em> Deep Clean Shoe</em>. Cocok untuk sepatu yang warnanya pudar, tergores,
-                                        atau ingin diberi sentuhan baru namun tetap terlihat rapi dan natural.
-                                    </p>
-                                ),
-                            },
-                        ]}
-                    />
+                <ServiceAccordion
+                    items={[
+                        {
+                            title: "OneDay Service – Rp45.000 (jadi dalam 24 jam)",
+                            content: (
+                                <p>
+                                    Cuci bersih seluruh bagian sepatu dengan prioritas pengerjaan khusus. Cocok
+                                    untuk kamu yang butuh sepatu bersih besok hari – misalnya untuk kerja, event,
+                                    atau jalan-jalan.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Express Service – Rp50.000 (jadi dalam 6 jam)",
+                            content: (
+                                <p>
+                                    Pilihan terbaik kalau kamu benar-benar dikejar waktu. Sepatu dibersihkan
+                                    menyeluruh dan dikerjakan ekstra cepat tanpa mengorbankan kebersihan.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Premium Clean – Rp60.000",
+                            content: (
+                                <p>
+                                    Paket cuci premium menggunakan cleaner dengan brand ternama seperti Jason Mark
+                                    / Crep*. Direkomendasikan untuk sepatu dengan material sensitif atau sepatu
+                                    branded yang ingin diperlakukan lebih eksklusif. (*Brand dapat disesuaikan stok
+                                    di outlet.)
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Un-Yellowing Midsole – mulai dari Rp65.000",
+                            content: (
+                                <p>
+                                    Treatment khusus untuk mengurangi warna kuning yang muncul pada bagian midsole
+                                    sepatu. Sudah termasuk Fast Clean sepatu, sehingga kamu mendapatkan midsole yang
+                                    lebih cerah sekaligus sepatu yang lebih bersih. Hasil akhir sangat dipengaruhi
+                                    oleh usia dan kondisi awal sepatu.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Reglue – mulai dari Rp35.000",
+                            content: (
+                                <p>
+                                    Lem ulang pada bagian midsole atau outsole yang mulai terlepas. Sudah termasuk
+                                    <em> Lite Clean Shoe</em>, sehingga sepatu tidak hanya kuat kembali tapi juga
+                                    lebih rapi saat dipakai.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Repaint Suede – Rp100.000",
+                            content: (
+                                <p>
+                                    Repaint khusus bahan suede, termasuk <em>Deep Clean Shoe</em>. Warna yang pudar
+                                    akan dikembalikan sedekat mungkin ke warna aslinya, dengan teknik aplikasi yang
+                                    menyesuaikan karakter suede agar tidak menggumpal.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Repaint Canvas, Mesh, Leather – mulai dari Rp80.000",
+                            content: (
+                                <p>
+                                    Repaint untuk semua jenis canvas, mesh, dan leather, sudah termasuk
+                                    <em> Deep Clean Shoe</em>. Cocok untuk sepatu yang warnanya pudar, tergores,
+                                    atau ingin diberi sentuhan baru namun tetap terlihat rapi dan natural.
+                                </p>
+                            ),
+                        },
+                    ]}
+                />
 
-                    <p>
-                        Sebelum repaint atau un-yellowing, kami akan menginformasikan estimasi hasil dan
-                        kemungkinan batas maksimal perbaikan sesuai kondisi sepatu. Kamu bisa setuju atau tidak
-                        sebelum kami mulai pengerjaan.
-                    </p>
-                </div>
+                <p>
+                    Sebelum repaint atau un-yellowing, kami akan menginformasikan estimasi hasil dan
+                    kemungkinan batas maksimal perbaikan sesuai kondisi sepatu. Kamu bisa setuju atau tidak
+                    sebelum kami mulai pengerjaan.
+                </p>
             </div>
         </ServiceDetailLayout>
     );

@@ -28,7 +28,7 @@ const ContactOne = () => {
     return (
         <>
         
-        <section className="contact-one pd-120-0-120">
+        <section className="contact-one pd-120-0-120" id='contact-one'>
             <div className="contact-one__bg jarallax" data-jarallax data-speed="0.2" data-imgposition="50% 0%">
             </div>
             <div className="contact-one__img wow slideInRight" data-wow-delay="500ms" data-wow-duration="2500ms"><img src="/assets/images/resources/contact-v1-img1.png" alt="" /></div>
@@ -62,7 +62,7 @@ const ContactOne = () => {
                                                 name="email"
                                                 value={formData.email}
                                                 onChange={handleChange}
-                                                placeholder="Email (opsional)"
+                                                placeholder="Email"
                                             />
                                         </div>
                                     </div>

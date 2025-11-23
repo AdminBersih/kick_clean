@@ -1,4 +1,8 @@
 import React, { useEffect } from 'react';
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/pagination";
 
 const ProjectOne = () => {
     useEffect(() => {
@@ -37,125 +41,39 @@ const ProjectOne = () => {
                         <h2 className="section-title__title">Lihat hasil pekerjaan Kick Clean</h2>
                     </div>
 
-                    {/* MOBILE: Carousel (tanpa image ke-2) */}
-                    <div className="d-block d-md-none">
-                        <div
-                            id="projectsCarousel"
-                            className="carousel slide"
-                            data-bs-ride="carousel"
-                            data-bs-interval="3000"     // autoplay tiap 3 detik
-                            data-bs-touch="true"
+                    {/* MOBILE: Swiper autoplay & swipe */}
+                    <div className="projects-one__slider">
+                        <Swiper
+                            modules={[Autoplay, Pagination]}
+                            autoplay={{ delay: 3000, disableOnInteraction: false }}
+                            pagination={{ clickable: true }}
+                            loop
+                            spaceBetween={16}
                         >
-                            <div className="carousel-inner">
-                                {/* Slide 1 - img1 */}
-                                <div className="carousel-item active">
+                            {[
+                                { src: "/assets/images/projects/projects-v1-img1.jpeg", alt: "Portofolio Kick Clean 1" },
+                                { src: "/assets/images/projects/projects-v1-img3.jpg", alt: "Portofolio Kick Clean 3" },
+                                { src: "/assets/images/projects/projects-v1-img4.jpg", alt: "Portofolio Kick Clean 4" },
+                                { src: "/assets/images/projects/projects-v1-img5.jpg", alt: "Portofolio Kick Clean 5" },
+                            ].map((item) => (
+                                <SwiperSlide key={item.src}>
                                     <div className="projects-one__single">
                                         <div className="projects-one__single-img">
-                                            <img
-                                                className="parallax-img d-block w-100"
-                                                src="/assets/images/projects/projects-v1-img1.jpeg"
-                                                alt="Portofolio Kick Clean 1"
-                                            />
+                                            <img className="parallax-img" src={item.src} alt={item.alt} />
                                             <div className="overlay-icon">
-                                                <a
-                                                    className="img-popup"
-                                                    href="/assets/images/projects/projects-v1-img1.jpeg"
-                                                >
+                                                <a className="img-popup" href={item.src}>
                                                     <span className="icon-link"></span>
                                                 </a>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-
-                                {/* Slide 2 - img3 */}
-                                <div className="carousel-item">
-                                    <div className="projects-one__single">
-                                        <div className="projects-one__single-img">
-                                            <img
-                                                className="parallax-img d-block w-100"
-                                                src="/assets/images/projects/projects-v1-img3.jpg"
-                                                alt="Portofolio Kick Clean 3"
-                                            />
-                                            <div className="overlay-icon">
-                                                <a
-                                                    className="img-popup"
-                                                    href="/assets/images/projects/projects-v1-img3.jpg"
-                                                >
-                                                    <span className="icon-link"></span>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Slide 3 - img4 */}
-                                <div className="carousel-item">
-                                    <div className="projects-one__single">
-                                        <div className="projects-one__single-img">
-                                            <img
-                                                className="parallax-img d-block w-100"
-                                                src="/assets/images/projects/projects-v1-img4.jpg"
-                                                alt="Portofolio Kick Clean 4"
-                                            />
-                                            <div className="overlay-icon">
-                                                <a
-                                                    className="img-popup"
-                                                    href="/assets/images/projects/projects-v1-img4.jpg"
-                                                >
-                                                    <span className="icon-link"></span>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Slide 4 - img5 */}
-                                <div className="carousel-item">
-                                    <div className="projects-one__single">
-                                        <div className="projects-one__single-img">
-                                            <img
-                                                className="parallax-img d-block w-100"
-                                                src="/assets/images/projects/projects-v1-img5.jpg"
-                                                alt="Portofolio Kick Clean 5"
-                                            />
-                                            <div className="overlay-icon">
-                                                <a
-                                                    className="img-popup"
-                                                    href="/assets/images/projects/projects-v1-img5.jpg"
-                                                >
-                                                    <span className="icon-link"></span>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Optional: kalau mau pakai next/prev */}
-                            <button
-                                className="carousel-control-prev"
-                                type="button"
-                                data-bs-target="#projectsCarousel"
-                                data-bs-slide="prev"
-                            >
-                                <span className="carousel-control-prev-icon" aria-hidden="true"></span>
-                                <span className="visually-hidden">Previous</span>
-                            </button>
-                            <button
-                                className="carousel-control-next"
-                                type="button"
-                                data-bs-target="#projectsCarousel"
-                                data-bs-slide="next"
-                            >
-                                <span className="carousel-control-next-icon" aria-hidden="true"></span>
-                                <span className="visually-hidden">Next</span>
-                            </button>
-                        </div>
+                                </SwiperSlide>
+                            ))}
+                        </Swiper>
                     </div>
 
-                    {/* DESKTOP / TABLET: layout grid seperti semula */}
-                    <div className="row d-none d-md-flex">
+                    {/* DESKTOP / TABLET: layout grid */}
+                    <div className="row projects-one__grid">
                         {/* Start Projects One Single */}
                         <div className="col-xl-4 col-lg-4 col-md-4 wow animated fadeInUp" data-wow-delay="0.1s">
                             <div className="projects-one__single">

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { ServiceOneData, ServicePricingOptions } from "@/data/service";
+import { ServiceOneData, ServicePricingOptions, OtherTreatmentGroups } from "@/data/service";
 
 const formatIDR = (value) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
@@ -12,6 +12,7 @@ const ServiceOrder = ({ serviceSlug }) => {
     const router = useRouter();
     const service = useMemo(() => getServiceBySlug(serviceSlug), [serviceSlug]);
     const pricing = ServicePricingOptions[serviceSlug] || [];
+    const [otherGroup, setOtherGroup] = useState("bag-wallet");
     const [selectedPriceId, setSelectedPriceId] = useState(pricing[0]?.id || "");
     const [address, setAddress] = useState("");
     const [shippingMethod, setShippingMethod] = useState("toko");
@@ -19,7 +20,13 @@ const ServiceOrder = ({ serviceSlug }) => {
     const [quantity, setQuantity] = useState(1);
     const [contactLoaded, setContactLoaded] = useState(false);
 
-    const selectedPackage = pricing.find((item) => item.id === selectedPriceId) || pricing[0];
+    const filteredPricing =
+        serviceSlug === "cuci-tas-dompet-koper"
+            ? pricing.filter((item) =>
+                  (OtherTreatmentGroups.find((g) => g.id === otherGroup) || OtherTreatmentGroups[0])?.names.includes(item.name)
+              )
+            : pricing;
+    const selectedPackage = filteredPricing.find((item) => item.id === selectedPriceId) || filteredPricing[0];
     const shippingCost = 0;
     const subtotal = selectedPackage ? (Number(quantity) || 1) * selectedPackage.price : 0;
     const total = subtotal + shippingCost;
@@ -49,6 +56,20 @@ const ServiceOrder = ({ serviceSlug }) => {
             router.replace("/service-pick");
         }
     }, [address, router]);
+
+    useEffect(() => {
+        if (serviceSlug !== "cuci-tas-dompet-koper") return;
+        const group = OtherTreatmentGroups.find((g) => g.id === otherGroup) || OtherTreatmentGroups[0];
+        const first = filteredPricing.find((item) => group.names.includes(item.name));
+        if (first) setSelectedPriceId(first.id);
+    }, [otherGroup, serviceSlug, filteredPricing]);
+
+    useEffect(() => {
+        if (!filteredPricing.length) return;
+        if (!filteredPricing.find((item) => item.id === selectedPriceId)) {
+            setSelectedPriceId(filteredPricing[0].id);
+        }
+    }, [filteredPricing, selectedPriceId]);
 
     if (!contactLoaded) {
         return null;
@@ -94,26 +115,53 @@ const ServiceOrder = ({ serviceSlug }) => {
 
                             <div className="sidebar__category">
                                 <h4 className="sidebar__title">Pilih paket &amp; harga</h4>
-                                <p className="service-details__bottom-subtitle">Pricelist {service.heading}</p>
-                                <ul className="sidebar__category-list">
-                                    {pricing.map((option) => (
-                                        <li key={option.id}>
-                                            <label>
-                                                <input
-                                                    type="radio"
-                                                    name="pricing"
-                                                    value={option.id}
-                                                    checked={selectedPriceId === option.id}
-                                                    onChange={(e) => setSelectedPriceId(e.target.value)}
-                                                />{" "}
-                                                {option.label}
-                                            </label>
-                                            {selectedPriceId === option.id && option.note && (
-                                                <p className="service-details__bottom-text1">{option.note}</p>
-                                            )}
-                                        </li>
-                                    ))}
-                                </ul>
+                                {serviceSlug === "cuci-tas-dompet-koper" && (
+                                    <div className="comment-form__input-box">
+                                        <label className="service-details__bottom-subtitle">Pilih jenis Other Treatment</label>
+                                        <ul className="sidebar__category-list">
+                                            {OtherTreatmentGroups.map((group) => (
+                                                <li key={group.id}>
+                                                    <label>
+                                                        <input
+                                                            type="radio"
+                                                            name="other-group"
+                                                            value={group.id}
+                                                            checked={otherGroup === group.id}
+                                                            onChange={(e) => setOtherGroup(e.target.value)}
+                                                        />{" "}
+                                                        {group.label}
+                                                    </label>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                                <div className="comment-form__input-box">
+                                    <label className="service-details__bottom-subtitle">Paket layanan</label>
+                                    <ul className="sidebar__category-list">
+                                        {filteredPricing.map((option) => (
+                                            <li key={option.id}>
+                                                <label>
+                                                    <input
+                                                        type="radio"
+                                                        name="pricing"
+                                                        value={option.id}
+                                                        checked={selectedPriceId === option.id}
+                                                        onChange={(e) => setSelectedPriceId(e.target.value)}
+                                                    />{" "}
+                                                    <div className="package-option-body">
+                                                        <span className="package-option-title">{option.label}</span>
+                                                        {option.note && (
+                                                            <p className="service-details__bottom-text1" style={{ marginTop: 4 }}>
+                                                                {option.note}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </label>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             </div>
 
                             <div className="sidebar__category">
@@ -236,6 +284,7 @@ const ServiceOrder = ({ serviceSlug }) => {
                                             address,
                                             notes,
                                             qty: quantity,
+                                            otherGroup: serviceSlug === "cuci-tas-dompet-koper" ? otherGroup : undefined,
                                         },
                                     })
                                 }

@@ -1,32 +1,39 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import SEO from "../../common/seo/Seo";
 import HeaderOne from "../../common/header/HeaderOne";
 import Breadcrumb from "../../common/breadcrumb/Breadcrumb";
 import FooterOne from "../../common/footer/FooterOne";
-import { ServiceOneData, ServicePricingOptions } from "@/data/service";
+import { ServiceCategoryCards, ServicePricingOptions, OtherTreatmentGroups } from "@/data/service";
+import BackgroundOne from '../../../public/assets/images/pattern/services-v1-pattern.png';
 
-const defaultLocation = { lat: -7.606649, lng: 110.81686 };
+const gentanCenter = { lat: -7.606649, lng: 110.81686 };
+const defaultLocation = { lat: gentanCenter.lat, lng: gentanCenter.lng };
 
 const formatIDR = (value) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
 
-const getServiceBySlug = (slug) => ServiceOneData.find((item) => item.slug === slug);
+const getServiceBySlug = (slug) => ServiceCategoryCards.find((item) => item.slug === slug);
 
 export default function OrderConfirmPage() {
     const router = useRouter();
     const { query } = router;
     const [step, setStep] = useState(1);
-    const [serviceSlug, setServiceSlug] = useState(query.service || ServiceOneData[0].slug);
+    const [serviceSlug, setServiceSlug] = useState(query.service || ServiceCategoryCards[0].slug);
     const [packageId, setPackageId] = useState(query.packageId || "");
     const [shippingMethod, setShippingMethod] = useState(query.shipping || "toko");
     const [address, setAddress] = useState(query.address || "");
     const [notes, setNotes] = useState(query.notes || "");
     const [quantity, setQuantity] = useState(query.qty || 1);
+    const [otherGroup, setOtherGroup] = useState(query.otherGroup || "bag-wallet");
     const [contact, setContact] = useState({ name: "", email: "", phone: "" });
     const [location, setLocation] = useState({ lat: defaultLocation.lat, lng: defaultLocation.lng });
     const [locationStatus, setLocationStatus] = useState("");
     const [stepError, setStepError] = useState("");
+    const [mapReady, setMapReady] = useState(false);
+    const mapContainerRef = useRef(null);
+    const mapRef = useRef(null);
+    const markerRef = useRef(null);
 
     useEffect(() => {
         if (!router.isReady) return;
@@ -36,6 +43,7 @@ export default function OrderConfirmPage() {
         if (query.address) setAddress(query.address);
         if (query.notes) setNotes(query.notes);
         if (query.qty) setQuantity(query.qty);
+        if (query.otherGroup) setOtherGroup(query.otherGroup);
     }, [query, router.isReady]);
 
     useEffect(() => {
@@ -58,32 +66,144 @@ export default function OrderConfirmPage() {
     }, [address]);
 
     const pricing = useMemo(() => ServicePricingOptions[serviceSlug] || [], [serviceSlug]);
+    const filteredPricing =
+        serviceSlug === "cuci-tas-dompet-koper"
+            ? pricing.filter((item) =>
+                  (OtherTreatmentGroups.find((g) => g.id === otherGroup) || OtherTreatmentGroups[0])?.names.includes(item.name)
+              )
+            : pricing;
+
     useEffect(() => {
-        if (pricing.length && !pricing.find((item) => item.id === packageId)) {
-            setPackageId(pricing[0].id);
+        if (filteredPricing.length && !filteredPricing.find((item) => item.id === packageId)) {
+            setPackageId(filteredPricing[0].id);
         }
-    }, [pricing, packageId]);
+    }, [filteredPricing, packageId]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        if (document.getElementById("leaflet-style")) return;
+        const link = document.createElement("link");
+        link.id = "leaflet-style";
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        link.integrity = "sha256-o9N1j7kGStp5l9Qgsn/mI66YUVRAM1QqwLw6vHf6X1I=";
+        link.crossOrigin = "";
+        document.head.appendChild(link);
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        if (step !== 1) {
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+                markerRef.current = null;
+                setMapReady(false);
+            }
+            return;
+        }
+        if (!mapContainerRef.current || mapRef.current) return;
+        const initMap = async () => {
+            const leaflet = await import("leaflet");
+            if (!isMounted || !mapContainerRef.current) return;
+            const L = leaflet.default;
+
+            const markerIcon = L.icon({
+                iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+                shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+                iconAnchor: [12, 41],
+            });
+
+            const map = L.map(mapContainerRef.current).setView([location.lat, location.lng], 16);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: "(c) OpenStreetMap",
+                maxZoom: 19,
+            }).addTo(map);
+
+            const marker = L.marker([location.lat, location.lng], { draggable: true, icon: markerIcon }).addTo(map);
+            marker.on("dragend", (e) => {
+                const latlng = e.target.getLatLng();
+                setLocation({ lat: latlng.lat, lng: latlng.lng });
+                setLocationStatus("Pin digeser manual untuk akurasi lokasi.");
+            });
+            map.on("click", (e) => {
+                marker.setLatLng(e.latlng);
+                setLocation({ lat: e.latlng.lat, lng: e.latlng.lng });
+                setLocationStatus("Pin di-set melalui klik peta.");
+            });
+
+            mapRef.current = map;
+            markerRef.current = marker;
+            setMapReady(true);
+        };
+        initMap();
+        return () => {
+            isMounted = false;
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+                markerRef.current = null;
+            }
+        };
+    }, [step]);
+
+    useEffect(() => {
+        if (!mapReady || !mapRef.current || !markerRef.current) return;
+        markerRef.current.setLatLng([location.lat, location.lng]);
+        mapRef.current.setView([location.lat, location.lng], mapRef.current.getZoom());
+    }, [location, mapReady]);
 
     const service = getServiceBySlug(serviceSlug);
-    const selectedPackage = pricing.find((item) => item.id === packageId) || pricing[0];
+    const selectedPackage = filteredPricing.find((item) => item.id === packageId) || filteredPricing[0];
     const subtotal = selectedPackage ? (Number(quantity) || 1) * selectedPackage.price : 0;
 
-    const handleGeoLocate = () => {
+    const handleGeoLocate = async () => {
         if (typeof window === "undefined" || !navigator.geolocation) {
             setLocationStatus("Perangkat tidak mendukung geolokasi.");
             return;
         }
-        setLocationStatus("Mengambil lokasi...");
+
+        if (!window.isSecureContext) {
+            setLocationStatus("Izin lokasi diblokir karena koneksi belum HTTPS. Gunakan pin manual atau fokus ke Gentan.");
+            return;
+        }
+
+        setLocationStatus("Mengambil lokasi akurat dari browser...");
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                setLocationStatus("Lokasi berhasil diatur.");
+                setLocationStatus("Lokasi berhasil diatur dari perangkat.");
             },
-            () => {
-                setLocationStatus("Tidak dapat mengambil lokasi. Pastikan izin lokasi aktif.");
+            async () => {
+                try {
+                    const res = await fetch("https://ipapi.co/json/");
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.latitude && data.longitude) {
+                            setLocation({ lat: data.latitude, lng: data.longitude });
+                            setLocationStatus("Lokasi diperkirakan dari jaringan. Geser pin untuk presisi.");
+                            return;
+                        }
+                    }
+                    setLocationStatus("Tidak dapat mengambil lokasi. Pastikan izin lokasi aktif atau isi manual.");
+                } catch (err) {
+                    setLocationStatus("Tidak dapat mengambil lokasi. Pastikan izin lokasi aktif atau isi manual.");
+                }
             },
             { enableHighAccuracy: true, timeout: 7000 }
         );
+    };
+
+    const handleManualLatLngChange = (field, value) => {
+        const parsed = parseFloat(value);
+        if (Number.isNaN(parsed)) return;
+        setLocation((prev) => ({ ...prev, [field]: parsed }));
+        setLocationStatus("Koordinat diperbarui secara manual.");
+    };
+
+    const handleFocusGentan = () => {
+        setLocation({ lat: gentanCenter.lat, lng: gentanCenter.lng });
+        setLocationStatus("Pin dipusatkan ke area Gentan, Kabupaten Sukoharjo.");
     };
 
     const validateStepOne = () => {
@@ -145,28 +265,54 @@ export default function OrderConfirmPage() {
 
     const StepOne = () => (
         <div className="service-details__bottom">
-            <div className="service-details__bottom-text1">
-                <p className="service-details__bottom-subtitle">Lokasi &amp; order recap</p>
-            </div>
-
-            <div className="contact-page-google-map">
-                <iframe
-                    className="contact-page-google-map__one"
-                    src={`https://maps.google.com/maps?q=${location.lat},${location.lng}&z=14&output=embed`}
-                    allowFullScreen
-                ></iframe>
-            </div>
-            <div className="sidebar__category" style={{ marginTop: 20 }}>
+            <div className="sidebar__category" style={{ marginTop: 0 }}>
                 <div className="sidebar__title">Titik lokasi</div>
-                <p className="service-details__bottom-text1">
-                    Latitude: {location.lat.toFixed(5)} | Longitude: {location.lng.toFixed(5)}
+                <p className="service-details__bottom-text1" style={{ marginBottom: 10 }}>
+                    Ambil lokasi akurat dengan geolokasi browser lalu rapikan pin manual di area Gentan, Sukoharjo.
                 </p>
-                <button className="thm-btn" type="button" onClick={handleGeoLocate}>
-                    <span>Gunakan lokasi saya</span>
-                    <i className="liquid"></i>
-                </button>
+                <div
+                    className="contact-page-google-map__one"
+                    ref={mapContainerRef}
+                    style={{ height: 360, borderRadius: 12, overflow: "hidden", marginBottom: 15 }}
+                ></div>
+                <div className="d-flex" style={{ gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+                    <button className="thm-btn" type="button" onClick={handleGeoLocate}>
+                        <span>Gunakan lokasi saya</span>
+                        <i className="liquid"></i>
+                    </button>
+                    <button className="thm-btn" type="button" onClick={handleFocusGentan} style={{ background: "#eef5ff" }}>
+                        <span style={{ color: "#1a1a1a" }}>Fokus ke Gentan</span>
+                        <i className="liquid"></i>
+                    </button>
+                </div>
+                <div className="row gutter-y-10">
+                    <div className="col-md-6">
+                        <label className="service-details__bottom-subtitle">Latitude</label>
+                        <input
+                            type="number"
+                            step="0.00001"
+                            className="comment-form__textarea"
+                            value={location.lat}
+                            onChange={(e) => handleManualLatLngChange("lat", e.target.value)}
+                        />
+                    </div>
+                    <div className="col-md-6">
+                        <label className="service-details__bottom-subtitle">Longitude</label>
+                        <input
+                            type="number"
+                            step="0.00001"
+                            className="comment-form__textarea"
+                            value={location.lng}
+                            onChange={(e) => handleManualLatLngChange("lng", e.target.value)}
+                        />
+                    </div>
+                </div>
+                <p className="service-details__bottom-text1" style={{ marginTop: 8 }}>
+                    Koordinat: {location.lat.toFixed(5)}, {location.lng.toFixed(5)} - geser atau klik pin di peta untuk titik
+                    jemput/antar yang presisi.
+                </p>
                 {locationStatus && (
-                    <p className="service-details__bottom-text1" style={{ color: "var(--thm-base)" }}>
+                    <p className="service-details__bottom-text1" style={{ color: "var(--thm-base)", marginTop: 4 }}>
                         {locationStatus}
                     </p>
                 )}
@@ -174,6 +320,51 @@ export default function OrderConfirmPage() {
 
             <div className="sidebar__category">
                 <h4 className="sidebar__title">Order Recap</h4>
+                {serviceSlug === "cuci-tas-dompet-koper" && (
+                    <div className="comment-form__input-box">
+                        <label className="service-details__bottom-subtitle">Jenis Other Treatment</label>
+                        <ul className="sidebar__category-list">
+                            {OtherTreatmentGroups.map((group) => (
+                                <li key={group.id}>
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            name="other-group-step1"
+                                            value={group.id}
+                                            checked={otherGroup === group.id}
+                                            onChange={(e) => setOtherGroup(e.target.value)}
+                                        />{" "}
+                                        {group.label}
+                                    </label>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                <div className="comment-form__input-box">
+                    <label className="service-details__bottom-subtitle">Paket layanan</label>
+                    <ul className="sidebar__category-list">
+                        {filteredPricing.map((item) => (
+                            <li key={item.id}>
+                                <label>
+                                    <input
+                                        type="radio"
+                                        name="package-step1"
+                                        value={item.id}
+                                        checked={packageId === item.id}
+                                        onChange={(e) => setPackageId(e.target.value)}
+                                    />{" "}
+                                    <div className="package-option-body">
+                                        <span className="package-option-title">{item.label}</span>
+                                        <p className="service-details__bottom-text1" style={{ marginTop: 4 }}>
+                                            {item.note}
+                                        </p>
+                                    </div>
+                                </label>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
                 <div className="comment-form__input-box">
                     <label className="service-details__bottom-subtitle">Nama</label>
                     <input
@@ -240,7 +431,7 @@ export default function OrderConfirmPage() {
                     </ul>
                 </div>
                 <div className="comment-form__input-box">
-                    <label className="service-details__bottom-subtitle">Jumlah items</label>
+                    <label className="service-details__bottom-subtitle">Jumlah items : {' '}</label>
                     <input
                         type="number"
                         min="1"
@@ -287,12 +478,8 @@ export default function OrderConfirmPage() {
 
     const StepTwo = () => (
         <div className="service-details__bottom">
-            <div className="service-details__bottom-text1">
-                <p className="service-details__bottom-subtitle">Tambah layanan (opsional)</p>
-                <p>Pilih layanan lain untuk digabung, atau lanjutkan jika tidak ada tambahan.</p>
-            </div>
-            <div className="row">
-                {ServiceOneData.map((item) => (
+            <div className="row order-addons-grid">
+                {ServiceCategoryCards.map((item) => (
                     <div className="col-xl-4 col-lg-4 col-md-6" key={item.id}>
                         <div className="services-one__single">
                             <div className="services-one__single-img">
@@ -339,43 +526,145 @@ export default function OrderConfirmPage() {
     );
 
     const StepThree = () => (
-        <div className="service-details__bottom">
-            <div className="service-details__bottom-text1">
-                <p className="service-details__bottom-subtitle">Ringkasan Order</p>
-            </div>
-            <div className="sidebar__category">
-                <h4 className="sidebar__title">Detail Pemesan</h4>
-                <p className="service-details__bottom-text1">Nama: {contact.name || "-"}</p>
-                <p className="service-details__bottom-text1">Email: {contact.email || "-"}</p>
-                <p className="service-details__bottom-text1">WhatsApp: {contact.phone || "-"}</p>
-            </div>
-            <div className="sidebar__category">
-                <h4 className="sidebar__title">Order</h4>
-                <p className="service-details__bottom-text1">
-                    Layanan: {service?.heading} - {selectedPackage?.label}
-                </p>
-                <p className="service-details__bottom-text1">Jumlah: {quantity}</p>
-                <p className="service-details__bottom-text1">Subtotal: {formatIDR(subtotal || 0)}</p>
-                <p className="service-details__bottom-text1">Alamat: {address || "-"}</p>
-                <p className="service-details__bottom-text1">
-                    Lokasi: {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-                </p>
-                <p className="service-details__bottom-text1">
-                    Pengiriman: {shippingMethod === "jemput" ? "Jemput di rumah" : "Datang ke toko"} (gratis 5-7 km)
-                </p>
-                <p className="service-details__bottom-text1">Catatan: {notes || "-"}</p>
-                <p className="service-details__bottom-title">Total: {formatIDR(subtotal || 0)}</p>
+        <div className="service-details__bottom step-three">
+            <div className="summary-banner">
+                <div className="summary-banner__left">
+                    <p className="eyebrow">Ringkasan & pembayaran</p>
+                    <h3 className="summary-title">{service?.heading || "Pilih layanan"}</h3>
+                    <div className="total-row">
+                        <span>Total pembayaran</span>
+                        <div className="total-amount">{formatIDR(subtotal || 0)}</div>
+                    </div>
+                    <p className="muted">
+                        Estimasi harga untuk {quantity} item, gratis antar-jemput 5-7 km & metode pembayaran fleksibel.
+                    </p>
+                </div>
+                <div className="pill-wrap">
+                    <span className="pill">
+                        <i className="fa fa-gem"></i>
+                        {selectedPackage?.label || "Paket belum dipilih"}
+                    </span>
+                    {serviceSlug === "cuci-tas-dompet-koper" && (
+                        <span className="pill">
+                            <i className="fa fa-layer-group"></i>
+                            {OtherTreatmentGroups.find((g) => g.id === otherGroup)?.label || "Bag & Wallet"}
+                        </span>
+                    )}
+                    <span className="pill">
+                        <i className="fa fa-map-marker-alt"></i>
+                        {shippingMethod === "jemput" ? "Jemput di rumah" : "Antar ke toko"}
+                    </span>
+                    <span className="pill">
+                        <i className="fa fa-cube"></i>
+                        {quantity} item
+                    </span>
+                </div>
             </div>
 
-            <div className="d-flex" style={{ gap: 10, justifyContent: "space-between", marginTop: 20 }}>
-                <button className="thm-btn" type="button" onClick={() => setStep(2)}>
-                    <span>Kembali</span>
-                    <i className="liquid"></i>
-                </button>
-                <button className="thm-btn" type="button">
-                    <span>Bayar Sekarang</span>
-                    <i className="liquid"></i>
-                </button>
+            <div className="grid-cards">
+                <div className="recap-card">
+                    <div className="card-header">
+                        <div className="icon-bubble">
+                            <span className="fa fa-user"></span>
+                        </div>
+                        <div>
+                            <p className="label">Detail pemesan</p>
+                            <h4>{contact.name || "Nama belum diisi"}</h4>
+                        </div>
+                        <span className="badge-soft">Kontak</span>
+                    </div>
+                    <ul className="info-list">
+                        <li>
+                            <span>Email</span>
+                            <span className="value">{contact.email || "-"}</span>
+                        </li>
+                        <li>
+                            <span>WhatsApp</span>
+                            <span className="value">{contact.phone || "-"}</span>
+                        </li>
+                        <li>
+                            <span>Alamat lengkap</span>
+                            <span className="value">{address || "-"}</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div className="recap-card">
+                    <div className="card-header">
+                        <div className="icon-bubble">
+                            <span className="fa fa-receipt"></span>
+                        </div>
+                        <div>
+                            <p className="label">Detail order</p>
+                            <h4>
+                                {service?.heading || "Layanan belum dipilih"} - {selectedPackage?.label || "Paket belum dipilih"}
+                            </h4>
+                        </div>
+                        <span className="badge-soft">Ringkasan</span>
+                    </div>
+                    <ul className="info-list">
+                        <li>
+                            <span>Paket</span>
+                            <span className="value">{selectedPackage?.label || "-"}</span>
+                        </li>
+                        {serviceSlug === "cuci-tas-dompet-koper" && (
+                            <li>
+                                <span>Other treatment</span>
+                                <span className="value">
+                                    {OtherTreatmentGroups.find((g) => g.id === otherGroup)?.label || "-"}
+                                </span>
+                            </li>
+                        )}
+                        <li>
+                            <span>Jumlah</span>
+                            <span className="value">{quantity} item</span>
+                        </li>
+                        <li>
+                            <span>Subtotal</span>
+                            <span className="value">{formatIDR(subtotal || 0)}</span>
+                        </li>
+                        <li>
+                            <span>Pengiriman</span>
+                            <span className="value">
+                                {shippingMethod === "jemput" ? "Jemput di rumah (gratis 5-7 km)" : "Antar ke toko"}
+                            </span>
+                        </li>
+                        <li>
+                            <span>Lokasi koordinat</span>
+                            <span className="value">
+                                {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div className="note-box">
+                <div className="icon-bubble small">
+                    <span className="fa fa-sticky-note"></span>
+                </div>
+                <div>
+                    <div className="note-label">Catatan khusus</div>
+                    <p className="service-details__bottom-text1" style={{ margin: 0 }}>
+                        {notes || "Tidak ada catatan tambahan."}
+                    </p>
+                </div>
+            </div>
+
+            <div className="action-bar">
+                <div className="action-hint">
+                    Cek lagi detail pesanan sebelum bayar. Anda bisa kembali untuk koreksi pada step sebelumnya.
+                </div>
+                <div className="d-flex" style={{ gap: 10, justifyContent: "flex-end" }}>
+                    <button className="thm-btn" type="button" onClick={() => setStep(2)}>
+                        <span>Kembali</span>
+                        <i className="liquid"></i>
+                    </button>
+                    <button className="thm-btn" type="button">
+                        <span>Bayar Sekarang</span>
+                        <i className="liquid"></i>
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -386,6 +675,7 @@ export default function OrderConfirmPage() {
             <HeaderOne />
             <Breadcrumb heading="Konfirmasi Order" currentPage="Step Order" />
             <section className="service-details pd-120-0-90">
+                <div className="services-one__pattern" style={{backgroundImage: `url(${BackgroundOne.src})`}}></div>
                 <div className="container">
                     {renderSteps()}
                     {step === 1 && <StepOne />}
@@ -397,3 +687,4 @@ export default function OrderConfirmPage() {
         </>
     );
 }
+

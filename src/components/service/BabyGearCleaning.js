@@ -70,42 +70,42 @@ const BabyGearCleaning = () => {
                     </div>
                 </div>
 
-                <div className="service-details__bottom-text4">
-                    <h3 className="service-details__bottom-subtitle">Pilihan Layanan Baby Gear</h3>
+            </div>
+            <div className="service-details__bottom-text4">
+                <h3 className="service-details__bottom-subtitle">Pilihan Layanan Baby Gear</h3>
 
-                    <ServiceAccordion
-                        items={[
-                            {
-                                title: "Stroller – Rp100.000 (4–6 hari pengerjaan)",
-                                content: (
-                                    <p>
-                                        Pembersihan menyeluruh bagian dudukan, sandaran, sabuk pengaman, dan rangka
-                                        luar. Direkomendasikan untuk stroller yang sering dipakai jalan-jalan di luar
-                                        rumah.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Bouncer – Rp80.000 (4–6 hari pengerjaan)",
-                                content: (
-                                    <p>
-                                        Membersihkan area duduk dan kain penopang, mengangkat noda makanan dan susu
-                                        yang sering menempel, serta mengurangi bau tidak sedap.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Car Seat – Rp70.000 (4–6 hari pengerjaan)",
-                                content: (
-                                    <p>
-                                        Cocok untuk car seat yang lama dipakai di dalam mobil. Kami bersihkan bagian
-                                        jok, strap, dan area sekitar kepala anak agar kembali nyaman digunakan.
-                                    </p>
-                                ),
-                            },
-                        ]}
-                    />
-                </div>
+                <ServiceAccordion
+                    items={[
+                        {
+                            title: "Stroller – Rp100.000 (4–6 hari pengerjaan)",
+                            content: (
+                                <p>
+                                    Pembersihan menyeluruh bagian dudukan, sandaran, sabuk pengaman, dan rangka
+                                    luar. Direkomendasikan untuk stroller yang sering dipakai jalan-jalan di luar
+                                    rumah.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Bouncer – Rp80.000 (4–6 hari pengerjaan)",
+                            content: (
+                                <p>
+                                    Membersihkan area duduk dan kain penopang, mengangkat noda makanan dan susu
+                                    yang sering menempel, serta mengurangi bau tidak sedap.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Car Seat – Rp70.000 (4–6 hari pengerjaan)",
+                            content: (
+                                <p>
+                                    Cocok untuk car seat yang lama dipakai di dalam mobil. Kami bersihkan bagian
+                                    jok, strap, dan area sekitar kepala anak agar kembali nyaman digunakan.
+                                </p>
+                            ),
+                        },
+                    ]}
+                />
             </div>
         </ServiceDetailLayout>
     );
