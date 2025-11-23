@@ -32,12 +32,11 @@ const ServiceOrder = ({ serviceSlug }) => {
     const [quantity, setQuantity] = useState(1);
     const [contactLoaded, setContactLoaded] = useState(false);
 
-    const filteredPricing =
-        serviceSlug === "cuci-tas-dompet-koper"
-            ? pricing.filter((item) =>
-                  (OtherTreatmentGroups.find((g) => g.id === otherGroup) || OtherTreatmentGroups[0])?.names.includes(item.name)
-              )
-            : pricing;
+    const filteredPricing = useMemo(() => {
+        if (serviceSlug !== "cuci-tas-dompet-koper") return pricing;
+        const group = OtherTreatmentGroups.find((g) => g.id === otherGroup) || OtherTreatmentGroups[0];
+        return pricing.filter((item) => group?.names.includes(item.name));
+    }, [pricing, serviceSlug, otherGroup]);
     const selectedPackage = filteredPricing.find((item) => item.id === selectedPriceId) || filteredPricing[0];
     const shippingCost = 0;
     const subtotal = selectedPackage ? (Number(quantity) || 1) * selectedPackage.price : 0;
@@ -68,13 +67,6 @@ const ServiceOrder = ({ serviceSlug }) => {
             router.replace("/service-pick");
         }
     }, [address, router]);
-
-    useEffect(() => {
-        if (serviceSlug !== "cuci-tas-dompet-koper") return;
-        const group = OtherTreatmentGroups.find((g) => g.id === otherGroup) || OtherTreatmentGroups[0];
-        const first = filteredPricing.find((item) => group.names.includes(item.name));
-        if (first) setSelectedPriceId(first.id);
-    }, [otherGroup, serviceSlug, filteredPricing]);
 
     useEffect(() => {
         if (!filteredPricing.length) return;

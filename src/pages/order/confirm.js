@@ -8,16 +8,68 @@ import { ServiceCategoryCards, OtherTreatmentGroups, slugToCategory } from "@/da
 import { useServicesData } from "@/hooks/useServicesData";
 import { useAuth } from "@/common/auth/AuthContext";
 import { addToCart, fetchCart, getOrCreateSessionId } from "@/lib/cartClient";
-import { createOrder } from "@/lib/ordersClient";
+import {
+    createOrder,
+    getMidtransStatus,
+    getPaymentLink,
+    recreatePaymentLink,
+} from "@/lib/ordersClient";
 import BackgroundOne from '../../../public/assets/images/pattern/services-v1-pattern.png';
 
-const gentanCenter = { lat: -7.606649, lng: 110.81686 };
+const storeLocation = { lat: -7.5803738, lng: 110.78332 };
+const gentanCenter = { lat: storeLocation.lat, lng: storeLocation.lng };
 const defaultLocation = { lat: gentanCenter.lat, lng: gentanCenter.lng };
 
 const formatIDR = (value) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
 
 const getServiceBySlug = (slug) => ServiceCategoryCards.find((item) => item.slug === slug);
+const normalizeId = (val) => (val === undefined || val === null ? "" : String(val));
+const successStatuses = ["settlement", "capture", "success"];
+const toRad = (deg) => (deg * Math.PI) / 180;
+const haversineDistanceKm = (from, to) => {
+    const hasFrom = Number.isFinite(from?.lat) && Number.isFinite(from?.lng);
+    const hasTo = Number.isFinite(to?.lat) && Number.isFinite(to?.lng);
+    if (!hasFrom || !hasTo) return null;
+    const lat1 = toRad(from.lat);
+    const lat2 = toRad(to.lat);
+    const dLat = lat2 - lat1;
+    const dLon = toRad(to.lng) - toRad(from.lng);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const earthRadiusKm = 6371.0088; // mean Earth radius for more accurate km result
+    return earthRadiusKm * c;
+};
+
+const pickPaymentUrl = (payload = {}) => {
+    if (!payload || typeof payload !== "object") return null;
+    const candidates = [
+        payload.paymentUrl,
+        payload.paymentURL,
+        payload.payment_url,
+        payload.payment_link,
+        payload.redirectUrl,
+        payload.redirectURL,
+        payload.redirect_url,
+        payload.midtransRedirectUrl,
+        payload.snapRedirectUrl,
+        payload.payment_redirect_url,
+    ].filter(Boolean);
+    if (candidates.length) return candidates[0];
+
+    if (Array.isArray(payload.actions)) {
+        const found = payload.actions.find((a) => a?.url) || payload.actions[0];
+        if (found?.url) return found.url;
+    }
+
+    if (payload.data && payload.data !== payload) {
+        return pickPaymentUrl(payload.data);
+    }
+
+    return null;
+};
 
 export default function OrderConfirmPage() {
     const router = useRouter();
@@ -51,7 +103,7 @@ export default function OrderConfirmPage() {
     useEffect(() => {
         if (!router.isReady) return;
         if (query.service) setServiceSlug(query.service);
-        if (query.packageId) setPackageId(query.packageId);
+        if (query.packageId) setPackageId(normalizeId(query.packageId));
         if (query.shipping) setShippingMethod(query.shipping);
         if (query.address) setAddress(query.address);
         if (query.notes) setNotes(query.notes);
@@ -111,14 +163,17 @@ export default function OrderConfirmPage() {
             : pricing;
 
     useEffect(() => {
-        if (filteredPricing.length && !filteredPricing.find((item) => item.id === packageId)) {
-            setPackageId(filteredPricing[0].id);
+        if (
+            filteredPricing.length &&
+            !filteredPricing.find((item) => normalizeId(item.id) === normalizeId(packageId))
+        ) {
+            setPackageId(normalizeId(filteredPricing[0].id));
         }
     }, [filteredPricing, packageId]);
 
     useEffect(() => {
         if (!packageId || servicesLoading) return;
-        if (filteredPricing.find((item) => item.id === packageId)) return;
+        if (filteredPricing.find((item) => normalizeId(item.id) === normalizeId(packageId))) return;
         ensureServiceById(packageId);
     }, [packageId, filteredPricing, ensureServiceById, servicesLoading]);
 
@@ -197,7 +252,8 @@ export default function OrderConfirmPage() {
     }, [location, mapReady]);
 
     const service = getServiceBySlug(serviceSlug);
-    const selectedPackage = filteredPricing.find((item) => item.id === packageId) || filteredPricing[0];
+    const selectedPackage =
+        filteredPricing.find((item) => normalizeId(item.id) === normalizeId(packageId)) || filteredPricing[0];
     const summaryItems = cartItems.length
         ? cartItems
         : selectedPackage
@@ -222,6 +278,11 @@ export default function OrderConfirmPage() {
                   .filter(Boolean)
                   .join(" • ")
             : service?.heading || "Pilih layanan";
+    const distanceFromStoreKm = useMemo(
+        () => haversineDistanceKm(storeLocation, location),
+        [location.lat, location.lng]
+    );
+    const isWithinFreeRange = distanceFromStoreKm !== null && distanceFromStoreKm <= 7;
 
     const handleGeoLocate = async () => {
         if (typeof window === "undefined" || !navigator.geolocation) {
@@ -269,7 +330,7 @@ export default function OrderConfirmPage() {
 
     const handleFocusGentan = () => {
         setLocation({ lat: gentanCenter.lat, lng: gentanCenter.lng });
-        setLocationStatus("Pin dipusatkan ke area Gentan, Kabupaten Sukoharjo.");
+        setLocationStatus("Pin dipusatkan ke toko Kick Clean Gentan.");
     };
 
     const validateStepOne = () => {
@@ -328,8 +389,23 @@ export default function OrderConfirmPage() {
         }
     }, [accessToken, sessionId]);
 
+    const openPaymentAndTrack = (orderCodeValue, paymentUrl) => {
+        if (paymentUrl && typeof window !== "undefined") {
+            window.open(paymentUrl, "_blank", "noopener,noreferrer");
+        }
+        if (orderCodeValue) {
+            router.push(`/track?orderCode=${orderCodeValue}`);
+        } else {
+            router.push("/track");
+        }
+    };
+
     const handlePayNow = async () => {
         if (payLoading) return;
+        if (!validateStepOne()) {
+            setStep(1);
+            return;
+        }
         setPaymentError("");
         const sid = sessionId || getOrCreateSessionId();
         if (!sid && !accessToken) {
@@ -343,6 +419,10 @@ export default function OrderConfirmPage() {
         try {
             setPayLoading(true);
             if (sid) setSessionId(sid);
+            if (!cartItems.length) {
+                await handleAddToCart();
+                await loadCartSnapshot();
+            }
             const { data } = await createOrder({
                 sessionId: sid,
                 customerName: contact.name,
@@ -353,23 +433,58 @@ export default function OrderConfirmPage() {
                 notes,
                 token: accessToken,
             });
-            const redirectUrl =
-                data?.paymentUrl ||
-                data?.redirectUrl ||
-                data?.midtransRedirectUrl ||
-                data?.snapRedirectUrl ||
-                data?.payment_redirect_url ||
-                data?.redirect_url ||
-                data?.payment?.redirect_url;
+            const orderCode =
+                data?.orderCode || data?.order?.orderCode || data?.order_code || data?.order?.code || data?.code;
+            let redirectUrl = pickPaymentUrl(data);
+
+                if (orderCode) {
+                    try {
+                        const statusPayload = await getMidtransStatus({ orderCode, token: accessToken });
+                        const trxStatus =
+                            statusPayload?.transaction_status || statusPayload?.transactionStatus || statusPayload?.status;
+                        if (trxStatus && successStatuses.includes(trxStatus)) {
+                            openPaymentAndTrack(orderCode);
+                            return;
+                        }
+                    } catch (statusErr) {
+                        if (process.env.NODE_ENV !== "production") {
+                            console.warn("Midtrans status error", statusErr);
+                    }
+                }
+
+                if (!redirectUrl) {
+                    try {
+                        const paymentPayload = await getPaymentLink({ orderCode, token: accessToken });
+                        redirectUrl = pickPaymentUrl(paymentPayload) || pickPaymentUrl(paymentPayload?.data || {});
+                    } catch (linkErr) {
+                        setPaymentError(linkErr?.message || "Gagal mengambil link pembayaran.");
+                    }
+                }
+
+                if (!redirectUrl) {
+                    try {
+                        const recreatePayload = await recreatePaymentLink({ orderCode, token: accessToken });
+                        redirectUrl = pickPaymentUrl(recreatePayload) || pickPaymentUrl(recreatePayload?.data || {});
+                    } catch (recreateErr) {
+                        setPaymentError(recreateErr?.message || "Gagal membuat ulang link pembayaran.");
+                    }
+                }
+
+                if (redirectUrl) {
+                    openPaymentAndTrack(orderCode, redirectUrl);
+                    return;
+                }
+
+                openPaymentAndTrack(orderCode);
+                return;
+            }
+
             if (redirectUrl) {
-                window.location.href = redirectUrl;
+                openPaymentAndTrack(orderCode, redirectUrl);
                 return;
             }
-            if (data?.orderCode) {
-                router.push(`/track?orderCode=${data.orderCode}`);
-                return;
-            }
-            router.push("/track");
+
+            openPaymentAndTrack(orderCode);
         } catch (err) {
             setPaymentError(err?.message || "Gagal membuat order, coba lagi.");
         } finally {
@@ -420,67 +535,131 @@ export default function OrderConfirmPage() {
 
     const StepOne = () => (
         <div className="service-details__bottom">
-            <div className="sidebar__category" style={{ marginTop: 0 }}>
-                <div className="sidebar__title">Titik lokasi</div>
-                <p className="service-details__bottom-text1" style={{ marginBottom: 10 }}>
-                    Ambil lokasi akurat dengan geolokasi browser lalu rapikan pin manual di area Gentan, Sukoharjo.
-                </p>
-                <div className="map-loading-wrap" style={{ marginBottom: 15 }}>
-                    {!mapReady && (
-                        <div className="map-skeleton">
-                            <div className="map-skeleton__shimmer" />
-                            <div className="map-skeleton__text">Menyiapkan peta...</div>
+            <div className="sidebar__category location-card" style={{ marginTop: 0 }}>
+                <div className="location-card__header">
+                    <div>
+                        <p className="eyebrow">Titik lokasi</p>
+                        <h3 className="location-card__title">Atur pin jemput / antar</h3>
+                        <p className="service-details__bottom-text1" style={{ marginBottom: 10 }}>
+                            Ambil lokasi akurat dengan geolokasi browser lalu rapikan pin manual di area Gentan, Sukoharjo.
+                            Jarak dihitung langsung dari titik toko Kick Clean Gentan untuk estimasi biaya.
+                        </p>
+                        <div className="chip-row">
+                            <span className="chip soft">
+                                <i className="fa fa-map-marker-alt"></i> Gentan, Sukoharjo
+                            </span>
+                            <span className={`chip ${isWithinFreeRange ? "chip-success" : "chip-danger"}`}>
+                                {distanceFromStoreKm !== null
+                                    ? `${distanceFromStoreKm.toFixed(2)} km dari toko`
+                                    : "Koordinat belum dipilih"}
+                            </span>
+                            <span className="chip soft">
+                                <i className="fa fa-crosshairs"></i> {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                            </span>
                         </div>
-                    )}
-                    <div
-                        className="contact-page-google-map__one"
-                        ref={mapContainerRef}
-                        style={{ height: 360, borderRadius: 12, overflow: "hidden" }}
-                    ></div>
-                </div>
-                <div className="d-flex" style={{ gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
-                    <button className="thm-btn" type="button" onClick={handleGeoLocate}>
-                        <span>Gunakan lokasi saya</span>
-                        <i className="liquid"></i>
-                    </button>
-                    <button className="thm-btn" type="button" onClick={handleFocusGentan} style={{ background: "#eef5ff" }}>
-                        <span>Fokus ke Gentan</span>
-                        <i className="liquid"></i>
-                    </button>
-                </div>
-                <div className="row gutter-y-10">
-                    <div className="col-md-6">
-                        <label className="service-details__bottom-subtitle">Latitude</label>
-                        <input
-                            type="number"
-                            step="0.00001"
-                            className="comment-form__textarea"
-                            value={location.lat}
-                            onChange={(e) => handleManualLatLngChange("lat", e.target.value)}
-                        />
                     </div>
-                    <div className="col-md-6">
-                        <label className="service-details__bottom-subtitle">Longitude</label>
-                        <input
-                            type="number"
-                            step="0.00001"
-                            className="comment-form__textarea"
-                            value={location.lng}
-                            onChange={(e) => handleManualLatLngChange("lng", e.target.value)}
-                        />
+                    <div className="location-card__stats">
+                        <div className="stat-card">
+                            <span className="label">Status pin</span>
+                            <h4>{locationStatus || "Pin siap digerakkan"}</h4>
+                            <p className="muted">Geser atau klik di peta untuk akurasi lokasi.</p>
+                        </div>
+                        <div className="stat-card">
+                            <span className="label">Estimasi jemput</span>
+                            <h4 style={{ color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}>
+                                {isWithinFreeRange ? "Gratis 5-7 km" : "+Rp10.000"}
+                            </h4>
+                            <p className="muted">Biaya dihitung dari titik toko Kick Clean Gentan.</p>
+                        </div>
                     </div>
                 </div>
-                <p className="service-details__bottom-text1" style={{ marginTop: 8 }}>
-                    Koordinat: {location.lat.toFixed(5)}, {location.lng.toFixed(5)} - geser atau klik pin di peta untuk titik
-                    jemput/antar yang presisi.
-                </p>
-                {locationStatus && (
-                    <p className="service-details__bottom-text1" style={{ color: "var(--thm-base)", marginTop: 4 }}>
-                        {locationStatus}
-                    </p>
-                )}
-            </div>
 
+                <div className="location-card__body">
+                    <div className="location-map-shell">
+                        <div className="map-loading-wrap" style={{ marginBottom: 12 }}>
+                            {!mapReady && (
+                                <div className="map-skeleton">
+                                    <div className="map-skeleton__shimmer" />
+                                    <div className="map-skeleton__text">Menyiapkan peta...</div>
+                                </div>
+                            )}
+                            <div
+                                className="contact-page-google-map__one"
+                                ref={mapContainerRef}
+                                style={{ height: 360, borderRadius: 14, overflow: "hidden" }}
+                            ></div>
+                        </div>
+                        <div className="floating-meta">
+                            <span className="pill">{shippingMethod === "jemput" ? "Jemput di rumah" : "Antar ke toko"}</span>
+                            <span className="pill muted-pill">
+                                <i className="fa fa-info-circle"></i> Geser pin untuk akurasi terbaik
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="location-controls">
+                        <div className="cta-row">
+                            <div className="d-flex" style={{ gap: 10, flexWrap: "wrap" }}>
+                                <button className="thm-btn" type="button" onClick={handleGeoLocate}>
+                                    <span>Gunakan lokasi saya</span>
+                                    <i className="liquid"></i>
+                                </button>
+                                <button
+                                    className="thm-btn ghost"
+                                    type="button"
+                                    onClick={handleFocusGentan}
+                                >
+                                    <span>Fokus ke Gentan</span>
+                                    <i className="liquid"></i>
+                                </button>
+                            </div>
+                            <p className="muted" style={{ margin: 0 }}>
+                                Mulai dari perkiraan lokasi perangkat, lalu rapikan pin ke titik paling presisi.
+                            </p>
+                        </div>
+
+                        <div className="coord-grid">
+                            <div className="comment-form__input-box" style={{ marginBottom: 0 }}>
+                                <label className="service-details__bottom-subtitle">Latitude</label>
+                                <input
+                                    type="number"
+                                    step="0.00001"
+                                    className="comment-form__textarea"
+                                    value={location.lat}
+                                    onChange={(e) => handleManualLatLngChange("lat", e.target.value)}
+                                />
+                            </div>
+                            <div className="comment-form__input-box" style={{ marginBottom: 0 }}>
+                                <label className="service-details__bottom-subtitle">Longitude</label>
+                                <input
+                                    type="number"
+                                    step="0.00001"
+                                    className="comment-form__textarea"
+                                    value={location.lng}
+                                    onChange={(e) => handleManualLatLngChange("lng", e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <p className="service-details__bottom-text1" style={{ marginTop: 4, marginBottom: 4 }}>
+                            Koordinat: {location.lat.toFixed(5)}, {location.lng.toFixed(5)} - geser atau klik pin di peta untuk titik
+                            jemput/antar yang presisi.
+                        </p>
+                        <p
+                            className="service-details__bottom-text1"
+                            style={{ marginTop: 0, fontWeight: 600, color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}
+                        >
+                            Jarak ke toko: {distanceFromStoreKm !== null ? `${distanceFromStoreKm.toFixed(2)} km` : "Belum ada koordinat valid."}
+                            {distanceFromStoreKm !== null && !isWithinFreeRange && " - Biaya jemput +Rp10.000"}
+                        </p>
+                        {locationStatus && (
+                            <p className="service-details__bottom-text1" style={{ color: "var(--thm-base)", marginTop: 0 }}>
+                                {locationStatus}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
             <div className="sidebar__category">
                 <h4 className="sidebar__title">Order Recap</h4>
                 {serviceSlug === "cuci-tas-dompet-koper" && (
@@ -525,8 +704,8 @@ export default function OrderConfirmPage() {
                                             type="radio"
                                             name="package-step1"
                                             value={item.id}
-                                            checked={packageId === item.id}
-                                            onChange={(e) => setPackageId(e.target.value)}
+                                            checked={normalizeId(packageId) === normalizeId(item.id)}
+                                            onChange={(e) => setPackageId(normalizeId(e.target.value))}
                                         />{" "}
                                         <div className="package-option-body">
                                             <span className="package-option-title">{item.label}</span>
@@ -685,7 +864,7 @@ export default function OrderConfirmPage() {
                                     onClick={() => {
                                         setServiceSlug(item.slug);
                                         const newPricing = pricingOptions[item.slug] || [];
-                                        setPackageId(newPricing[0]?.id || "");
+                                        setPackageId(normalizeId(newPricing[0]?.id || ""));
                                         setStep(1);
                                     }}
                                 >
@@ -867,6 +1046,13 @@ export default function OrderConfirmPage() {
                             </span>
                         </li>
                         <li>
+                            <span>Jarak dari toko</span>
+                            <span className="value" style={{ color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}>
+                                {distanceFromStoreKm !== null ? `${distanceFromStoreKm.toFixed(2)} km` : "Belum dihitung"}
+                                {distanceFromStoreKm !== null && !isWithinFreeRange && " (biaya jemput +Rp10.000)"}
+                            </span>
+                        </li>
+                        <li>
                             <span>Lokasi koordinat</span>
                             <span className="value">
                                 {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
@@ -926,7 +1112,221 @@ export default function OrderConfirmPage() {
                 </div>
             </section>
             <FooterOne />
+            <style jsx>{`
+                .location-card {
+                    background: linear-gradient(135deg, #f8fbff, #eef2ff);
+                    border: 1px solid #e5e7eb;
+                    border-radius: 18px;
+                    padding: 18px;
+                    box-shadow: 0 22px 70px rgba(15, 23, 42, 0.1);
+                }
+                .location-card__header {
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: space-between;
+                    gap: 16px;
+                    align-items: flex-start;
+                }
+                .location-card__title {
+                    margin: 4px 0 6px;
+                    font-size: 24px;
+                    color: #0f172a;
+                }
+                .chip-row {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    margin-top: 8px;
+                }
+                .chip {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 12px;
+                    border-radius: 999px;
+                    background: rgba(255, 255, 255, 0.85);
+                    border: 1px solid #e2e8f0;
+                    font-weight: 600;
+                    color: #0f172a;
+                    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+                }
+                .chip i {
+                    color: var(--thm-base);
+                }
+                .chip.soft {
+                    background: rgba(255, 255, 255, 0.95);
+                }
+                .chip-success {
+                    background: #ecfdf3;
+                    color: #166534;
+                    border-color: #bbf7d0;
+                }
+                .chip-danger {
+                    background: #fef2f2;
+                    color: #b91c1c;
+                    border-color: #fecdd3;
+                }
+                .location-card__stats {
+                    display: flex;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                }
+                .stat-card {
+                    background: #fff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 16px;
+                    padding: 12px 14px;
+                    min-width: 210px;
+                    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+                }
+                .stat-card .label {
+                    font-size: 12px;
+                    letter-spacing: 0.05em;
+                    text-transform: uppercase;
+                    color: #64748b;
+                    margin-bottom: 2px;
+                    display: block;
+                }
+                .stat-card h4 {
+                    margin: 6px 0 4px;
+                    font-size: 20px;
+                }
+                .stat-card .muted {
+                    margin: 0;
+                    color: #475569;
+                }
+                .location-card__body {
+                    display: grid;
+                    grid-template-columns: minmax(320px, 1.1fr) minmax(280px, 0.9fr);
+                    gap: 16px;
+                    margin-top: 16px;
+                }
+                .location-map-shell {
+                    position: relative;
+                    background: radial-gradient(circle at 20% 20%, #102a43, #0b1829);
+                    border-radius: 16px;
+                    padding: 12px;
+                    border: 1px solid #d7def0;
+                    box-shadow: 0 26px 90px rgba(15, 23, 42, 0.22);
+                }
+                .contact-page-google-map__one {
+                    border-radius: 12px;
+                    border: 1px solid #d7def0;
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+                }
+                .floating-meta {
+                    position: absolute;
+                    left: 16px;
+                    bottom: 16px;
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                }
+                .pill {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 8px 12px;
+                    border-radius: 999px;
+                    background: rgba(255, 255, 255, 0.9);
+                    color: #0f172a;
+                    font-weight: 600;
+                    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+                }
+                .muted-pill {
+                    background: rgba(255, 255, 255, 0.8);
+                    border: 1px dashed #cbd5e1;
+                }
+                .location-controls {
+                    background: #fff;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 16px;
+                    padding: 14px;
+                    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+                .cta-row {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                .coord-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 10px;
+                }
+                .location-card .thm-btn {
+                    box-shadow: 0 12px 30px rgba(17, 24, 39, 0.16);
+                }
+                .location-card .thm-btn.ghost {
+                    background: #f7f9ff;
+                    color: #0f172a;
+                    border: 1px solid #d7def0;
+                    box-shadow: none;
+                }
+                .location-card .comment-form__textarea {
+                    background: #f8fbff;
+                    border-color: #d7def0;
+                }
+                .location-card .comment-form__textarea:focus {
+                    border-color: var(--thm-base);
+                }
+                .map-skeleton {
+                    border-radius: 14px;
+                    overflow: hidden;
+                    background: linear-gradient(90deg, #e5e7eb, #f3f4f6, #e5e7eb);
+                    min-height: 120px;
+                    position: relative;
+                }
+                .map-skeleton__text {
+                    position: absolute;
+                    inset: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: #475569;
+                    font-weight: 600;
+                }
+                .map-skeleton__shimmer {
+                    position: absolute;
+                    inset: 0;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+                    animation: shimmer 1.6s infinite;
+                }
+                @keyframes shimmer {
+                    0% {
+                        transform: translateX(-100%);
+                    }
+                    100% {
+                        transform: translateX(100%);
+                    }
+                }
+                @media (max-width: 991px) {
+                    .location-card__body {
+                        grid-template-columns: 1fr;
+                    }
+                    .location-card__stats {
+                        width: 100%;
+                    }
+                }
+                @media (max-width: 575px) {
+                    .location-card__title {
+                        font-size: 20px;
+                    }
+                    .chip {
+                        font-size: 13px;
+                        padding: 6px 10px;
+                    }
+                    .pill {
+                        font-size: 13px;
+                        padding: 6px 10px;
+                    }
+                }
+            `}</style>
         </>
     );
 }
+
 

@@ -14,8 +14,15 @@ const ContactInfo = () => {
                                     <span className="fa fa-map-marker"></span>
                                 </div>
                                 <div className="contact-box__single-text">
-                                    <h2><Link href="#">Lokasi Workshop</Link></h2>
-                                    <p>Jl. Raya Songgo Langit No.2, Gentan,<br />Baki, Sukoharjo 57556</p>
+                                    <h2>
+                                        <Link href="https://www.google.com/maps/place/Kick+Clean+Gentan/@-7.5803738,110.7784491,17z/data=!4m15!1m8!3m7!1s0x2e7a15000273a66b:0x188127a33911bf0d!2sKick+Clean+Gentan!8m2!3d-7.5803738!4d110.78332!10e1!16s%2Fg%2F11xn3n9dq1!3m5!1s0x2e7a15000273a66b:0x188127a33911bf0d!8m2!3d-7.5803738!4d110.78332!16s%2Fg%2F11xn3n9dq1?hl=en-US&entry=ttu&g_ep=EgoyMDI1MTExNy4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noreferrer">
+                                            Lokasi Workshop
+                                        </Link>
+                                    </h2>
+                                    <p>
+                                        Jl. Raya Songgo Langit No.2, Songgolangit, Gentan,<br />
+                                        Kec. Baki, Kabupaten Sukoharjo, Jawa Tengah 57556, Indonesia
+                                    </p>
                                 </div>
                             </div>
                         </div>

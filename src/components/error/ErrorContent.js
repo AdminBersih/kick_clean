@@ -4,19 +4,19 @@ import Link from 'next/link';
 const ErrorContent = () => {
     return (
         <>
-            <section class="error-page">
-				<div class="container">
-					<div class="row">
-						<div class="col-xl-12">
-							<div class="error-page__wrapper text-center">
-								<div class="error-page__content">
+            <section className="error-page">
+				<div className="container">
+					<div className="row">
+						<div className="col-xl-12">
+							<div className="error-page__wrapper text-center">
+								<div className="error-page__content">
 									<h2>404</h2>
 									<h3>Oops! Halaman tidak ditemukan</h3>
 									<p>Maaf, halaman yang kamu cari tidak tersedia atau sudah dipindahkan.</p>
-									<div class="btn-box">
-										<Link href="/" class="thm-btn">
+									<div className="btn-box">
+										<Link href="/" className="thm-btn">
 											<span>Kembali ke Beranda</span>
-											<div class="liquid"></div>
+											<div className="liquid"></div>
 										</Link>
 									</div>
 								</div>
