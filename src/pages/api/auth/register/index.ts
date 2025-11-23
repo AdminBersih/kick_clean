@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
-import dbConnect from "../../../lib/dbConnect";
-import User from "../../../models/User";
-import { signAccessToken, signRefreshToken } from "../../../lib/jwt";
-import { mergeGuestCartIntoUser } from "../../../lib/cart";
-import { serialize } from "cookie";
+import dbConnect from "../../../../lib/dbConnect";
+import User from "../../../../models/User";
+import { signAccessToken, signRefreshToken } from "../../../../lib/jwt";
+import { mergeGuestCartIntoUser } from "../../../../lib/cart";
+import * as cookie from "cookie";
 
 export default async function handler(req, res) {
   await dbConnect();
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
   const refreshToken = signRefreshToken({ id: user._id });
 
   res.setHeader("Set-Cookie",
-    serialize("refreshToken", refreshToken, {
+    cookie.serialize("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -46,6 +46,7 @@ export default async function handler(req, res) {
   res.status(201).json({
     message: "Registered successfully",
     accessToken,
+    refreshToken,
     user: { id: user._id, name: user.name, email: user.email },
   });
 }
