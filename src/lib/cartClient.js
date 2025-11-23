@@ -1,5 +1,5 @@
 const API_BASE = process.env.NEXT_PUBLIC_BASE_URL || "";
-const SESSION_KEY = "kickclean-session-id";
+export const SESSION_KEY = "kickclean-session-id";
 
 const isBrowser = typeof window !== "undefined";
 const isObjectId = (value) => typeof value === "string" && /^[a-fA-F0-9]{24}$/.test(value);

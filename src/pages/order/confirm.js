@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import SEO from "../../common/seo/Seo";
 import HeaderOne from "../../common/header/HeaderOne";
@@ -8,6 +8,7 @@ import { ServiceCategoryCards, OtherTreatmentGroups, slugToCategory } from "@/da
 import { useServicesData } from "@/hooks/useServicesData";
 import { useAuth } from "@/common/auth/AuthContext";
 import { addToCart, fetchCart, getOrCreateSessionId } from "@/lib/cartClient";
+import { createOrder } from "@/lib/ordersClient";
 import BackgroundOne from '../../../public/assets/images/pattern/services-v1-pattern.png';
 
 const gentanCenter = { lat: -7.606649, lng: 110.81686 };
@@ -44,6 +45,8 @@ export default function OrderConfirmPage() {
     const [cartLoading, setCartLoading] = useState(false);
     const [sessionId, setSessionId] = useState("");
     const [submitLoading, setSubmitLoading] = useState(false);
+    const [payLoading, setPayLoading] = useState(false);
+    const [paymentError, setPaymentError] = useState("");
 
     useEffect(() => {
         if (!router.isReady) return;
@@ -185,7 +188,7 @@ export default function OrderConfirmPage() {
                 markerRef.current = null;
             }
         };
-    }, [step]);
+    }, [location.lat, location.lng, step]);
 
     useEffect(() => {
         if (!mapReady || !mapRef.current || !markerRef.current) return;
@@ -195,7 +198,30 @@ export default function OrderConfirmPage() {
 
     const service = getServiceBySlug(serviceSlug);
     const selectedPackage = filteredPricing.find((item) => item.id === packageId) || filteredPricing[0];
-    const subtotal = selectedPackage ? (Number(quantity) || 1) * selectedPackage.price : 0;
+    const summaryItems = cartItems.length
+        ? cartItems
+        : selectedPackage
+        ? [
+              {
+                  service_id: selectedPackage.id,
+                  name: selectedPackage.label || selectedPackage.name,
+                  price: selectedPackage.price,
+                  quantity: Number(quantity) || 1,
+              },
+          ]
+        : [];
+    const totalQuantity = summaryItems.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
+    const cartSubtotal = summaryItems.reduce(
+        (acc, item) => acc + (Number(item.quantity) || 0) * (Number(item.price) || 0),
+        0
+    );
+    const summaryTitle =
+        summaryItems.length > 0
+            ? summaryItems
+                  .map((item) => item.name)
+                  .filter(Boolean)
+                  .join(" • ")
+            : service?.heading || "Pilih layanan";
 
     const handleGeoLocate = async () => {
         if (typeof window === "undefined" || !navigator.geolocation) {
@@ -288,7 +314,7 @@ export default function OrderConfirmPage() {
         return items;
     };
 
-    const loadCartSnapshot = async () => {
+    const loadCartSnapshot = useCallback(async () => {
         try {
             setCartLoading(true);
             const res = await fetchCart({ sessionId, token: accessToken });
@@ -300,12 +326,61 @@ export default function OrderConfirmPage() {
         } finally {
             setCartLoading(false);
         }
+    }, [accessToken, sessionId]);
+
+    const handlePayNow = async () => {
+        if (payLoading) return;
+        setPaymentError("");
+        const sid = sessionId || getOrCreateSessionId();
+        if (!sid && !accessToken) {
+            setPaymentError("Session tidak ditemukan, muat ulang halaman lalu coba lagi.");
+            return;
+        }
+        if (!summaryItems.length) {
+            setPaymentError("Keranjang masih kosong, kembali ke step sebelumnya.");
+            return;
+        }
+        try {
+            setPayLoading(true);
+            if (sid) setSessionId(sid);
+            const { data } = await createOrder({
+                sessionId: sid,
+                customerName: contact.name,
+                phone: contact.phone,
+                email: contact.email,
+                address,
+                pickupMethod: shippingMethod === "jemput" ? "pickup" : "dropoff",
+                notes,
+                token: accessToken,
+            });
+            const redirectUrl =
+                data?.paymentUrl ||
+                data?.redirectUrl ||
+                data?.midtransRedirectUrl ||
+                data?.snapRedirectUrl ||
+                data?.payment_redirect_url ||
+                data?.redirect_url ||
+                data?.payment?.redirect_url;
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+                return;
+            }
+            if (data?.orderCode) {
+                router.push(`/track?orderCode=${data.orderCode}`);
+                return;
+            }
+            router.push("/track");
+        } catch (err) {
+            setPaymentError(err?.message || "Gagal membuat order, coba lagi.");
+        } finally {
+            setPayLoading(false);
+        }
     };
 
     useEffect(() => {
         if (step !== 3) return;
         loadCartSnapshot();
-    }, [step]);
+    }, [loadCartSnapshot, step]);
 
     const renderSteps = () => (
         <div className="counter-one">
@@ -350,18 +425,26 @@ export default function OrderConfirmPage() {
                 <p className="service-details__bottom-text1" style={{ marginBottom: 10 }}>
                     Ambil lokasi akurat dengan geolokasi browser lalu rapikan pin manual di area Gentan, Sukoharjo.
                 </p>
-                <div
-                    className="contact-page-google-map__one"
-                    ref={mapContainerRef}
-                    style={{ height: 360, borderRadius: 12, overflow: "hidden", marginBottom: 15 }}
-                ></div>
+                <div className="map-loading-wrap" style={{ marginBottom: 15 }}>
+                    {!mapReady && (
+                        <div className="map-skeleton">
+                            <div className="map-skeleton__shimmer" />
+                            <div className="map-skeleton__text">Menyiapkan peta...</div>
+                        </div>
+                    )}
+                    <div
+                        className="contact-page-google-map__one"
+                        ref={mapContainerRef}
+                        style={{ height: 360, borderRadius: 12, overflow: "hidden" }}
+                    ></div>
+                </div>
                 <div className="d-flex" style={{ gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
                     <button className="thm-btn" type="button" onClick={handleGeoLocate}>
                         <span>Gunakan lokasi saya</span>
                         <i className="liquid"></i>
                     </button>
                     <button className="thm-btn" type="button" onClick={handleFocusGentan} style={{ background: "#eef5ff" }}>
-                        <span style={{ color: "#1a1a1a" }}>Fokus ke Gentan</span>
+                        <span>Fokus ke Gentan</span>
                         <i className="liquid"></i>
                     </button>
                 </div>
@@ -640,20 +723,21 @@ export default function OrderConfirmPage() {
             <div className="summary-banner">
                 <div className="summary-banner__left">
                     <p className="eyebrow">Ringkasan & pembayaran</p>
-                    <h3 className="summary-title">{service?.heading || "Pilih layanan"}</h3>
+                    <h3 className="summary-title">{summaryTitle}</h3>
                     <div className="total-row">
                         <span>Total pembayaran</span>
-                        <div className="total-amount">{formatIDR(subtotal || 0)}</div>
+                        <div className="total-amount">{formatIDR(cartSubtotal || 0)}</div>
                     </div>
                     <p className="muted">
-                        Estimasi harga untuk {quantity} item, gratis antar-jemput 5-7 km & metode pembayaran fleksibel.
+                        Estimasi harga untuk {totalQuantity || quantity} item, gratis antar-jemput 5-7 km & metode
+                        pembayaran fleksibel.
                     </p>
                 </div>
                 <div className="pill-wrap">
-                    <span className="pill">
+                    {/* <span className="pill">
                         <i className="fa fa-gem"></i>
                         {selectedPackage?.label || "Paket belum dipilih"}
-                    </span>
+                    </span> */}
                     {serviceSlug === "cuci-tas-dompet-koper" && (
                         <span className="pill">
                             <i className="fa fa-layer-group"></i>
@@ -666,7 +750,7 @@ export default function OrderConfirmPage() {
                     </span>
                     <span className="pill">
                         <i className="fa fa-cube"></i>
-                        {quantity} item
+                        {totalQuantity || quantity} item
                     </span>
                 </div>
             </div>
@@ -705,9 +789,9 @@ export default function OrderConfirmPage() {
                             <span className="fa fa-receipt"></span>
                         </div>
                         <div>
-                            <p className="label">Detail order</p>
+                            {/* <p className="label"></p> */}
                             <h4>
-                                {service?.heading || "Layanan belum dipilih"} - {selectedPackage?.label || "Paket belum dipilih"}
+                                Detail order
                             </h4>
                         </div>
                         <span className="badge-soft">Ringkasan</span>
@@ -725,18 +809,41 @@ export default function OrderConfirmPage() {
                                 <span className="value" style={{ color: "red" }}>{cartError}</span>
                             </li>
                         )}
-                        {cartItems.map((item) => (
-                            <li key={item.service_id || item.name}>
-                                <span>{item.name || "Layanan"}</span>
+                        {summaryItems.map((item) => {
+                            const qty = Number(item.quantity) || 0;
+                            const unit = Number(item.price) || 0;
+                            const lineTotal = qty * unit;
+                            return (
+                                <li key={item.service_id || item.name}>
+                                    <span>
+                                        {item.name || "Layanan"}{" "}
+                                        <span className="value" style={{ fontWeight: 400 }}>
+                                            ({qty}x)
+                                        </span>
+                                    </span>
+                                    <span className="value">
+                                        {formatIDR(unit)}{" "}
+                                        <span className="muted" style={{ marginLeft: 6 }}>
+                                            {formatIDR(lineTotal)}
+                                        </span>
+                                    </span>
+                                </li>
+                            );
+                        })}
+                        {!summaryItems.length && (
+                            <li>
+                                <span>Keranjang</span>
+                                <span className="value">Belum ada item.</span>
+                            </li>
+                        )}
+                        {selectedPackage && (
+                            <li>
+                                <span>Paket utama</span>
                                 <span className="value">
-                                    {item.quantity} x {formatIDR(item.price || 0)}
+                                    {selectedPackage?.label || selectedPackage?.name || "-"}
                                 </span>
                             </li>
-                        ))}
-                        <li>
-                            <span>Paket</span>
-                            <span className="value">{selectedPackage?.label || "-"}</span>
-                        </li>
+                        )}
                         {serviceSlug === "cuci-tas-dompet-koper" && (
                             <li>
                                 <span>Other treatment</span>
@@ -747,11 +854,11 @@ export default function OrderConfirmPage() {
                         )}
                         <li>
                             <span>Jumlah</span>
-                            <span className="value">{quantity} item</span>
+                            <span className="value">{totalQuantity || quantity} item</span>
                         </li>
                         <li>
                             <span>Subtotal</span>
-                            <span className="value">{formatIDR(subtotal || 0)}</span>
+                            <span className="value">{formatIDR(cartSubtotal || 0)}</span>
                         </li>
                         <li>
                             <span>Pengiriman</span>
@@ -785,13 +892,18 @@ export default function OrderConfirmPage() {
                 <div className="action-hint">
                     Cek lagi detail pesanan sebelum bayar. Anda bisa kembali untuk koreksi pada step sebelumnya.
                 </div>
+                {paymentError && (
+                    <p className="service-details__bottom-text1" style={{ color: "red", margin: "6px 0" }}>
+                        {paymentError}
+                    </p>
+                )}
                 <div className="d-flex" style={{ gap: 10, justifyContent: "flex-end" }}>
                     <button className="thm-btn" type="button" onClick={() => setStep(2)}>
                         <span>Kembali</span>
                         <i className="liquid"></i>
                     </button>
-                    <button className="thm-btn" type="button">
-                        <span>Bayar Sekarang</span>
+                    <button className="thm-btn" type="button" onClick={handlePayNow} disabled={payLoading}>
+                        <span>{payLoading ? "Memproses..." : "Bayar Sekarang"}</span>
                         <i className="liquid"></i>
                     </button>
                 </div>
