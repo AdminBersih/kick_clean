@@ -2,6 +2,8 @@ import { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/dbConnect";
 import { getUserFromRequest } from "@/lib/auth";
 import Order from "@/models/Order";
+import "@/models/Service";
+
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   await dbConnect();
@@ -12,6 +14,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const { id } = req.query;
+
+  if (req.method === "GET") {
+    try {
+      const order = await Order.findById(id)
+        .populate("items.service_id")
+        .lean();
+
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      return res.status(200).json({ order });
+    } catch (error) {
+      console.error("GET Order Error:", error);
+      return res.status(500).json({ message: "Failed to fetch order" });
+    }
+  }
 
   if (req.method === "PATCH") {
     const { status } = req.body;

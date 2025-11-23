@@ -4,7 +4,8 @@ import ScrollToTop from "react-scroll-to-top";
 import { FaAngleUp } from 'react-icons/fa';
 import Head from "next/head";
 import { AuthProvider } from "../common/auth/AuthContext";
-
+import '@/styles/admin.css';
+import '@/styles/login.css'; 
 function MyApp({ Component, pageProps }) {
     useEffect(() => {
         setTimeout(() => {

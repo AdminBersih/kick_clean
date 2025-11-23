@@ -19,6 +19,14 @@ export interface IOrder extends Document {
   items: IOrderItem[];
   totalPrice: number;
   status: "pending" | "processing" | "finished" | "cancelled";
+  midtrans: {
+    orderId?: string;           // midtrans order_id
+    transactionId?: string;     // midtrans transaction_id
+    redirectUrl?: string;       // snap redirect url
+    paymentStatus?: string;     // pending, settlement, cancel, expire, failure
+    paymentType?: string;       // credit_card, qris, gopay, bank_transfer, etc
+    fraudStatus?: string;       // accept, challenge, deny
+  },
 }
 
 const OrderItemSchema = new Schema<IOrderItem>({
@@ -44,6 +52,14 @@ const OrderSchema = new Schema<IOrder>(
       type: String,
       enum: ["pending", "processing", "finished", "cancelled"],
       default: "pending",
+    },
+    midtrans: {
+      orderId: { type: String },
+      transactionId: { type: String },
+      redirectUrl: { type: String },
+      paymentStatus: { type: String, default: "unpaid" },
+      paymentType: { type: String },
+      fraudStatus: { type: String }
     },
   },
   { timestamps: true }

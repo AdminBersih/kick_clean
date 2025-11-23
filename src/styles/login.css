@@ -1,0 +1,140 @@
+/* src/styles/login.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Scope khusus Login Page agar tidak bentrok */
+#login-scope {
+  font-family: 'Inter', sans-serif;
+  background-color: #F1F5F9; /* Background abu terang */
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #1F2937;
+}
+
+/* Kartu Login (Tengah) */
+#login-scope .login-card {
+  background: white;
+  width: 100%;
+  max-width: 400px;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #E5E7EB;
+  text-align: center;
+}
+
+/* Logo & Judul */
+#login-scope .brand-logo {
+  width: 56px;
+  height: 56px;
+  background-color: #0F172A; /* Primary Blue */
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+
+#login-scope h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1F2937;
+  margin-bottom: 8px;
+}
+
+#login-scope .subtitle {
+  font-size: 14px;
+  color: #6B7280;
+  margin-bottom: 32px;
+}
+
+/* Form Input */
+#login-scope .form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+#login-scope label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+#login-scope .input-wrapper {
+  position: relative;
+}
+
+#login-scope .input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9CA3AF;
+}
+
+#login-scope input {
+  width: 100%;
+  padding: 12px 16px 12px 42px; /* Padding kiri besar untuk icon */
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s;
+  font-family: 'Inter', sans-serif;
+}
+
+#login-scope input:focus {
+  border-color: #0F172A;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+}
+
+/* Tombol Login */
+#login-scope .btn-login {
+  width: 100%;
+  background-color: #0F172A;
+  color: white;
+  font-weight: 600;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 10px;
+}
+
+#login-scope .btn-login:hover {
+  background-color: #1E293B;
+}
+
+#login-scope .btn-login:disabled {
+  background-color: #94A3B8;
+  cursor: not-allowed;
+}
+
+/* Error Message */
+#login-scope .error-box {
+  background-color: #FEF2F2;
+  color: #DC2626;
+  font-size: 13px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #FECACA;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* Footer Copy */
+#login-scope .footer-copy {
+  margin-top: 32px;
+  font-size: 12px;
+  color: #9CA3AF;
+}

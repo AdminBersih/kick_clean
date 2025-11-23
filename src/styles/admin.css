@@ -1,0 +1,1050 @@
+/* src/styles/admin.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* --- 1. VARIABEL & RESET GLOBAL (Hanya di dalam Scope Admin) --- */
+#admin-scope {
+  /* Definisi Variabel khusus Admin */
+  --admin-bg: #F1F5F9;
+  --admin-sidebar-bg: #FFFFFF;
+  --primary-blue: #0F172A;
+  --text-dark: #1F2937;
+  --text-gray: #6B7280;
+  --border-color: #E5E7EB;
+  --green-status: #059669;
+  --red-status: #DC2626;
+  --orange-status: #D97706;
+  --sidebar-width: 260px;
+  --header-height: 64px;
+
+  /* Reset Font & Style agar tidak terpengaruh Template Utama */
+  font-family: 'Inter', sans-serif !important;
+  background-color: var(--admin-bg) !important;
+  color: var(--text-dark) !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Reset elemen umum di dalam admin scope */
+#admin-scope * {
+  box-sizing: border-box;
+}
+
+#admin-scope h1, 
+#admin-scope h2, 
+#admin-scope h3, 
+#admin-scope h4, 
+#admin-scope h5, 
+#admin-scope h6 {
+  font-family: 'Inter', sans-serif !important;
+  margin: 0 !important;
+  padding: 0;
+  font-weight: 700 !important;
+  color: var(--text-dark) !important;
+}
+
+#admin-scope p {
+  margin: 0 !important;
+  font-size: inherit !important;
+}
+
+#admin-scope a {
+  text-decoration: none !important;
+  color: inherit;
+  transition: none !important; /* Matikan animasi lambat template */
+}
+
+#admin-scope ul {
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+}
+
+#admin-scope button {
+  font-family: 'Inter', sans-serif !important;
+  outline: none;
+}
+
+/* --- 2. LAYOUT UTAMA --- */
+
+#admin-scope .admin-wrapper {
+  display: block !important;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--admin-bg);
+  position: relative; 
+}
+
+/* --- Sidebar --- */
+#admin-scope .sidebar {
+  width: var(--sidebar-width);
+  background: var(--admin-sidebar-bg);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  position: fixed; 
+  top: 0;
+  left: 0;
+  bottom: 0;
+  height: 100vh;
+  z-index: 1000; /* Pastikan di atas elemen template */
+  overflow-y: auto;
+}
+
+#admin-scope .brand {
+  padding: 24px;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: var(--header-height);
+  box-sizing: border-box;
+}
+
+#admin-scope .menu-list {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#admin-scope .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: var(--text-gray) !important;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s;
+}
+
+#admin-scope .menu-item:hover {
+  background-color: #F3F4F6;
+  color: var(--text-dark) !important;
+}
+
+#admin-scope .menu-item.active {
+  background-color: var(--primary-blue);
+  color: white !important;
+}
+
+#admin-scope .menu-header {
+  padding: 20px 16px 10px;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #9CA3AF;
+  text-transform: uppercase;
+}
+
+/* --- Main Content --- */
+#admin-scope .main-content {
+  margin-left: var(--sidebar-width) !important; 
+  width: auto !important;
+  display: block !important;
+  padding: 0 !important; /* Reset padding template */
+  min-height: 100vh;
+}
+
+/* --- Topbar --- */
+#admin-scope .topbar {
+  height: var(--header-height);
+  background: var(--admin-sidebar-bg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 32px;
+  gap: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#admin-scope .admin-btn {
+  border: 1px solid var(--border-color);
+  background: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- 3. DASHBOARD CONTENT --- */
+#admin-scope .page-content {
+  padding: 32px;
+}
+
+#admin-scope .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  
+  /* 👇 BARIS SAKTI UNTUK MENGHILANGKAN GAP 👇 */
+  padding: 0 !important; 
+  background: none !important;
+  min-height: auto !important;
+  height: auto !important;
+}
+
+#admin-scope .page-title h1 {
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  color: var(--text-dark);
+  margin: 0 0 4px 0 !important;
+  line-height: 1.2 !important;
+}
+
+#admin-scope .breadcrumb {
+  color: var(--text-gray);
+  font-size: 13px !important;
+}
+
+#admin-scope .date-range {
+  background: white;
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px !important;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+/* --- 4. KOMPONEN DASHBOARD & CARDS --- */
+#admin-scope .stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+#admin-scope .card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+#admin-scope .card-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  font-size: 14px !important;
+  font-weight: 600;
+  color: var(--text-gray);
+}
+
+#admin-scope .card-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+#admin-scope .icon-box {
+  width: 48px;
+  height: 48px;
+  background-color: var(--primary-blue);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+#admin-scope .stat-value {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: var(--text-dark);
+}
+
+#admin-scope .stat-desc {
+  font-size: 11px !important;
+  color: var(--text-gray);
+  margin-top: 2px !important;
+}
+
+/* --- 5. TABLE --- */
+#admin-scope .section-title {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  color: var(--text-dark);
+  margin-bottom: 16px !important;
+}
+
+#admin-scope .table-wrapper {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+#admin-scope .custom-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px !important;
+  min-width: 600px;
+}
+
+#admin-scope .custom-table th {
+  background: #F9FAFB;
+  text-align: left;
+  padding: 16px 24px;
+  font-weight: 600 !important;
+  color: var(--text-gray);
+  border-bottom: 1px solid var(--border-color);
+}
+
+#admin-scope .custom-table td {
+  padding: 16px 24px;
+  border-bottom: 1px solid #F3F4F6;
+  color: var(--text-dark);
+}
+
+#admin-scope .status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+#admin-scope .delivered { color: var(--green-status); font-weight: 600; }
+#admin-scope .delivered .status-dot { background: var(--green-status); }
+
+#admin-scope .canceled { color: var(--red-status); font-weight: 600; }
+#admin-scope .canceled .status-dot { background: var(--orange-status); }
+
+
+/* --- 6. HALAMAN PRODUCTS --- */
+
+/* Tombol Hitam */
+#admin-scope .btn-dark {
+  background-color: #1F2937;
+  color: white !important;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+#admin-scope .btn-dark:hover {
+  background-color: #000000;
+}
+
+/* Grid Layout */
+#admin-scope .products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+/* Product Card */
+#admin-scope .product-card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+#admin-scope .pc-header {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+
+#admin-scope .pc-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#admin-scope .pc-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #1F2937;
+  margin: 0 0 4px 0 !important;
+}
+
+#admin-scope .pc-category {
+  font-size: 12px !important;
+  color: #6B7280;
+  margin-bottom: 4px !important;
+}
+
+#admin-scope .pc-price {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #1F2937;
+}
+
+#admin-scope .pc-menu-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* Summary */
+#admin-scope .pc-summary h4 {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  margin: 0 0 4px 0 !important;
+  color: #374151;
+}
+
+#admin-scope .pc-summary p {
+  font-size: 12px !important;
+  color: #6B7280;
+  line-height: 1.5 !important;
+  margin: 0 0 16px 0 !important;
+}
+
+/* Stats Box */
+#admin-scope .pc-stats-box {
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 12px;
+  background-color: #F9FAFB;
+}
+
+#admin-scope .stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px !important;
+}
+
+#admin-scope .label {
+  color: #4B5563;
+}
+
+#admin-scope .value-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600 !important;
+  color: #374151;
+}
+
+#admin-scope .divider {
+  border: 0;
+  border-top: 1px solid #E5E7EB;
+  margin: 8px 0 !important;
+}
+
+#admin-scope .mb-2 { margin-bottom: 8px !important; }
+#admin-scope .mt-2 { margin-top: 8px !important; }
+
+#admin-scope .progress-track {
+  width: 40px;
+  height: 4px;
+  background-color: #E5E7EB;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+#admin-scope .progress-fill {
+  width: 60%; 
+  height: 100%;
+  background-color: #F59E0B; 
+}
+
+/* --- TAMBAHAN KHUSUS HALAMAN ORDERS (Paste di bawah admin.css) --- */
+
+/* Header Actions (Date & Dropdown) */
+#admin-scope .header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+#admin-scope .date-picker-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600 !important;
+  color: #1F2937 !important;
+  font-size: 14px !important;
+}
+
+#admin-scope .status-dropdown {
+  background: #F3F4F6; /* Abu-abu muda */
+  padding: 8px 16px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 30px; /* Jarak antara teks dan panah */
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #4B5563 !important;
+  cursor: pointer;
+  border: 1px solid #E5E7EB;
+}
+
+/* Styling Judul Card "Recent Purchases" */
+#admin-scope .card-title {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #1F2937 !important;
+}
+
+/* Customer Cell (Foto + Nama) */
+#admin-scope .customer-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#admin-scope .customer-cell img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+#admin-scope .customer-cell span {
+    font-weight: 500 !important;
+    color: #1F2937 !important;
+}
+
+/* Pagination Styling */
+#admin-scope .pagination-wrapper {
+    padding: 20px;
+    background: #f9fafb; /* Background abu-abu muda di footer tabel */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid #E5E7EB;
+}
+
+#admin-scope .page-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #E5E7EB;
+    background: white;
+    border-radius: 6px;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #6B7280 !important;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#admin-scope .page-btn:hover {
+    background: #F3F4F6;
+}
+
+#admin-scope .page-btn.active {
+    background: #1F2937 !important; /* Warna Hitam/Biru Tua */
+    color: white !important;
+    border-color: #1F2937;
+}
+
+#admin-scope .next-btn {
+    padding: 0 16px;
+    height: 32px;
+    border: 1px solid #E5E7EB;
+    background: white;
+    border-radius: 6px;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #6B7280 !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+#admin-scope .dots {
+    color: #9CA3AF !important;
+    margin: 0 4px;
+}
+
+/* src/styles/admin.css - FINAL VERSION */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* --- 1. RESET GLOBAL & VARIABEL (Anti-Leak) --- */
+#admin-scope {
+  --admin-bg: #F1F5F9;
+  --admin-sidebar-bg: #FFFFFF;
+  --primary-blue: #0F172A;
+  --text-dark: #1F2937;
+  --text-gray: #6B7280;
+  --border-color: #E5E7EB;
+  --green-status: #059669;
+  --red-status: #DC2626;
+  --orange-status: #D97706;
+  --sidebar-width: 260px;
+  --header-height: 64px;
+
+  font-family: 'Inter', sans-serif !important;
+  background-color: var(--admin-bg) !important;
+  color: var(--text-dark) !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+#admin-scope * { box-sizing: border-box; }
+
+/* Reset Font Heading & Link */
+#admin-scope h1, #admin-scope h2, #admin-scope h3, 
+#admin-scope h4, #admin-scope h5, #admin-scope h6 {
+  font-family: 'Inter', sans-serif !important;
+  margin: 0 !important; padding: 0;
+  font-weight: 700 !important; color: var(--text-dark) !important;
+}
+#admin-scope a { text-decoration: none !important; color: inherit; transition: none !important; }
+#admin-scope ul { margin: 0 !important; padding: 0 !important; list-style: none !important; }
+#admin-scope button { font-family: 'Inter', sans-serif !important; outline: none; }
+
+
+/* --- 2. LAYOUT UTAMA (Sidebar & Content) --- */
+#admin-scope .admin-wrapper {
+  display: block !important;
+  min-height: 100vh; width: 100%;
+  background-color: var(--admin-bg); position: relative; 
+}
+
+#admin-scope .sidebar {
+  width: var(--sidebar-width); background: var(--admin-sidebar-bg);
+  border-right: 1px solid var(--border-color);
+  display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0; bottom: 0; height: 100vh;
+  z-index: 1000; overflow-y: auto;
+}
+
+#admin-scope .brand {
+  padding: 24px; font-size: 20px !important; font-weight: 800 !important;
+  color: var(--text-dark); display: flex; alignItems: center; gap: 10px;
+  height: var(--header-height); box-sizing: border-box;
+}
+
+#admin-scope .menu-list { padding: 0 16px; display: flex; flex-direction: column; gap: 4px; }
+
+#admin-scope .menu-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+  color: var(--text-gray) !important; text-decoration: none;
+  border-radius: 8px; font-size: 14px !important; font-weight: 500 !important;
+  transition: all 0.2s;
+}
+#admin-scope .menu-item:hover { background-color: #F3F4F6; color: var(--text-dark) !important; }
+#admin-scope .menu-item.active { background-color: var(--primary-blue); color: white !important; }
+#admin-scope .menu-header {
+  padding: 20px 16px 10px; font-size: 12px !important; font-weight: 600 !important;
+  color: #9CA3AF !important; text-transform: uppercase;
+}
+
+#admin-scope .main-content {
+  margin-left: var(--sidebar-width) !important; width: auto !important;
+  display: block !important; padding: 0 !important; min-height: 100vh;
+}
+
+#admin-scope .topbar {
+  height: var(--header-height); background: var(--admin-sidebar-bg);
+  border-bottom: 1px solid var(--border-color); display: flex; align-items: center;
+  justify-content: flex-end; padding: 0 32px; gap: 20px;
+  position: sticky; top: 0; z-index: 900; width: 100%; box-sizing: border-box;
+}
+
+#admin-scope .admin-btn {
+  border: 1px solid var(--border-color); background: white; padding: 8px 16px;
+  border-radius: 6px; font-size: 13px !important; font-weight: 600 !important;
+  cursor: pointer; display: flex; align-items: center; gap: 8px;
+}
+
+/* --- 3. PAGE CONTENT & UTILS --- */
+#admin-scope .page-content { padding: 32px; }
+
+#admin-scope .page-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 24px; padding: 0 !important; background: none !important;
+  min-height: auto !important; height: auto !important;
+}
+#admin-scope .page-title h1 { font-size: 24px !important; margin: 0 0 4px 0 !important; }
+#admin-scope .breadcrumb { color: var(--text-gray); font-size: 13px !important; }
+
+/* --- 4. CARDS, TABLE & PAGINATION --- */
+#admin-scope .card {
+  background: white; border-radius: 12px; padding: 20px;
+  border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+#admin-scope .custom-table { width: 100%; border-collapse: collapse; font-size: 14px !important; }
+#admin-scope .custom-table th {
+  background: #F9FAFB; text-align: left; padding: 16px 24px;
+  font-weight: 600 !important; color: var(--text-gray); border-bottom: 1px solid var(--border-color);
+}
+#admin-scope .custom-table td {
+  padding: 16px 24px; border-bottom: 1px solid #F3F4F6; color: var(--text-dark);
+}
+#admin-scope .status-dot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px;
+}
+#admin-scope .delivered { color: var(--green-status); font-weight: 600; }
+#admin-scope .delivered .status-dot { background: var(--green-status); }
+#admin-scope .canceled { color: var(--red-status); font-weight: 600; }
+#admin-scope .canceled .status-dot { background: var(--orange-status); }
+
+/* Pagination */
+#admin-scope .pagination-wrapper {
+    padding: 20px; background: #f9fafb; display: flex; align-items: center; gap: 8px; border-top: 1px solid #E5E7EB;
+}
+#admin-scope .page-btn {
+    width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid #E5E7EB; background: white; border-radius: 6px; font-size: 13px !important;
+    font-weight: 500 !important; color: #6B7280 !important; cursor: pointer;
+}
+#admin-scope .page-btn:hover { background: #F3F4F6; }
+#admin-scope .page-btn.active { background: #1F2937 !important; color: white !important; border-color: #1F2937; }
+#admin-scope .next-btn {
+    padding: 0 16px; height: 32px; border: 1px solid #E5E7EB; background: white;
+    border-radius: 6px; font-size: 12px !important; font-weight: 600 !important;
+    color: #6B7280 !important; cursor: pointer; display: flex; align-items: center;
+}
+
+/* --- 5. ORDER DETAILS (Gabungan Style & Layout) --- */
+
+/* Badge & Buttons (Style) */
+#admin-scope .badge-pending {
+  background-color: #FFEDD5; color: #C2410C; font-size: 11px !important;
+  font-weight: 700 !important; padding: 4px 10px; border-radius: 4px; text-transform: uppercase;
+}
+#admin-scope .action-square-btn {
+  width: 40px; height: 40px; background: #F3F4F6; border: 1px solid #E5E7EB;
+  border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #4B5563;
+}
+#admin-scope .btn-save {
+  background: #F3F4F6; color: #4B5563 !important; font-weight: 600 !important;
+  padding: 0 20px; border-radius: 6px; border: 1px solid #E5E7EB;
+}
+
+/* Layout Horizontal Header (Kiri ID, Kanan Tombol) */
+#admin-scope .order-top-header {
+  display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;
+}
+#admin-scope .order-id-group { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+#admin-scope .order-date-group { display: flex; align-items: center; gap: 8px; color: #6B7280 !important; font-size: 14px !important; }
+#admin-scope .right-actions { display: flex; gap: 12px; }
+
+/* Layout Grid Card (Customer & Order Info Sebelahan) */
+#admin-scope .info-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 24px; /* Kunci agar horizontal */
+}
+
+/* Style Info Box */
+#admin-scope .info-box { border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; }
+#admin-scope .info-box-inner { display: flex; gap: 16px; }
+#admin-scope .info-text { flex: 1; }
+#admin-scope .icon-square {
+  width: 45px; height: 45px; background-color: #1F2937; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;
+}
+#admin-scope .btn-outline {
+  margin-top: 10px; background: transparent; border: 1px solid #1F2937;
+  color: #1F2937 !important; font-weight: 600 !important; font-size: 13px !important;
+  padding: 8px 0; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+}
+#admin-scope .btn-outline:hover { background: #1F2937; color: white !important; }
+
+/* Payment & Note (Sebelahan 1:2) */
+#admin-scope .payment-note-grid {
+  display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-top: 24px;
+}
+#admin-scope .payment-card-row { display: flex; align-items: center; gap: 12px; }
+#admin-scope .custom-textarea {
+  width: 100%; height: 120px; border: 1px solid #E5E7EB; border-radius: 8px;
+  padding: 15px; font-size: 14px; color: #4B5563; outline: none; resize: none;
+  font-family: 'Inter', sans-serif !important;
+}
+#admin-scope .custom-textarea:focus { border-color: #0F172A; }
+
+/* Total Price Section (Rata Kanan) */
+#admin-scope .summary-section-wrapper {
+  display: flex; justify-content: flex-end; /* Kunci agar di kanan */
+  padding: 24px; padding-right: 32px;
+}
+#admin-scope .summary-box { width: 300px; }
+#admin-scope .summary-row {
+  display: flex; justify-content: space-between; margin-bottom: 12px;
+  font-size: 14px !important; color: #4B5563 !important;
+}
+#admin-scope .s-value { weight: 600 !important; color: #1F2937 !important; text-align: right; }
+#admin-scope .total-row {
+  border-top: 1px solid #E5E7EB; padding-top: 16px; margin-top: 16px; margin-bottom: 0;
+}
+#admin-scope .s-label-total { font-size: 18px !important; font-weight: 700 !important; color: #1F2937 !important; }
+#admin-scope .s-value-total { font-size: 18px !important; font-weight: 700 !important; color: #1F2937 !important; text-align: right; }
+
+/* Helper Images */
+#admin-scope .product-cell-flex { display: flex; align-items: center; gap: 12px; }
+#admin-scope .prod-img-placeholder { width: 40px; height: 40px; background-color: #E5E7EB; border-radius: 4px; }
+
+/* Responsive HP */
+@media (max-width: 768px) {
+  #admin-scope .info-grid, #admin-scope .payment-note-grid { grid-template-columns: 1fr; }
+  #admin-scope .order-top-header { flex-direction: column; }
+}
+
+
+/* --- TAMBAHAN KHUSUS HALAMAN ADD PRODUCT --- */
+
+/* Layout Grid Utama (Kiri Form, Kanan Gallery) */
+#admin-scope .add-product-wrapper {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr; /* Kiri sedikit lebih lebar */
+  gap: 30px;
+  align-items: start;
+}
+
+/* --- Styling Form (Kiri) --- */
+#admin-scope .form-card {
+  padding: 30px;
+}
+
+#admin-scope .form-group {
+  margin-bottom: 20px;
+}
+
+#admin-scope .form-group label {
+  display: block;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #1F2937 !important;
+  margin-bottom: 8px;
+}
+
+#admin-scope .custom-input {
+  width: 100%;
+  height: 48px;
+  border: 1px solid #9CA3AF; /* Border abu sedikit gelap */
+  border-radius: 6px;
+  padding: 0 16px;
+  font-size: 14px;
+  color: #4B5563;
+  outline: none;
+  background: white;
+  font-family: 'Inter', sans-serif !important;
+}
+
+#admin-scope .custom-input:focus,
+#admin-scope .custom-textarea:focus {
+    border-color: #0F172A; /* Warna biru tua saat diklik */
+}
+
+#admin-scope .custom-textarea {
+    width: 100%;
+    height: 140px;
+    border: 1px solid #9CA3AF;
+    border-radius: 6px;
+    padding: 16px;
+    font-size: 14px;
+    color: #4B5563;
+    outline: none;
+    resize: none;
+    font-family: 'Inter', sans-serif !important;
+}
+
+#admin-scope .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* Tag Input Area */
+#admin-scope .tag-input-area {
+    border: 1px solid #9CA3AF;
+    border-radius: 6px;
+    padding: 12px;
+    min-height: 80px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+#admin-scope .tag-pill {
+    background-color: #374151;
+    color: white !important;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+}
+
+/* --- Styling Gallery (Kanan) --- */
+#admin-scope .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Kotak Abu Besar (Preview) */
+#admin-scope .main-image-preview {
+    width: 100%;
+    height: 300px;
+    background-color: #C4C4C4; /* Warna abu sesuai desain */
+    border-radius: 8px;
+}
+
+#admin-scope .section-label {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    margin-bottom: 12px !important;
+    color: #1F2937;
+}
+
+/* Kotak Upload Dashed */
+#admin-scope .upload-box {
+    border: 2px dashed #9CA3AF;
+    border-radius: 8px;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: white;
+    margin-bottom: 24px;
+    cursor: pointer;
+}
+
+#admin-scope .upload-text {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    margin-top: 12px !important;
+    color: #4B5563 !important;
+}
+#admin-scope .upload-subtext {
+    font-size: 12px !important;
+    color: #9CA3AF !important;
+}
+
+/* File List Item */
+#admin-scope .file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#admin-scope .file-item {
+    background: white;
+    padding: 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+#admin-scope .file-thumb {
+    width: 48px;
+    height: 48px;
+    background-color: #C4C4C4;
+    border-radius: 4px;
+}
+
+#admin-scope .file-info {
+    flex: 1;
+}
+
+#admin-scope .file-name {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #1F2937 !important;
+    display: block;
+    margin-bottom: 6px !important;
+}
+
+#admin-scope .progress-bar {
+    height: 4px;
+    width: 100%;
+    background-color: #E5E7EB;
+    border-radius: 2px;
+}
+#admin-scope .progress-fill {
+    height: 100%;
+    background-color: #0F172A; /* Warna progress biru tua */
+    border-radius: 2px;
+}
+
+#admin-scope .file-check {
+    width: 20px;
+    height: 20px;
+    background-color: #0F172A;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Buttons Bottom */
+#admin-scope .action-buttons {
+    display: flex;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+#admin-scope .btn-delete {
+    flex: 1;
+    background-color: #003F62; /* Biru tua sesuai desain */
+    color: white !important;
+    font-weight: 700 !important;
+    padding: 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px !important;
+    letter-spacing: 0.5px;
+}
+
+#admin-scope .btn-cancel {
+    flex: 1;
+    background-color: white;
+    color: #1F2937 !important;
+    font-weight: 700 !important;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #1F2937;
+    cursor: pointer;
+    font-size: 13px !important;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    #admin-scope .add-product-wrapper {
+        grid-template-columns: 1fr; /* Jadi 1 kolom di layar kecil */
+    }
+}
