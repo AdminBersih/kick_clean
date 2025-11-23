@@ -11,10 +11,10 @@ export default function AddProduct() {
   // State sesuai field Backend (Service.ts)
   const [formData, setFormData] = useState({
     name: '',
-    category: '',
+    category: '', // Default kosong agar user harus memilih dropdown
     description: '',
-    price: '',     // Nanti dikonversi ke Number
-    duration: '',  // WAJIB di backend
+    price: '',     
+    duration: '',  
   });
 
   const handleChange = (e) => {
@@ -25,9 +25,9 @@ export default function AddProduct() {
   const handleSubmit = async () => {
     setIsLoading(true);
 
-    // Validasi sederhana
-    if(!formData.name || !formData.price || !formData.duration) {
-        alert("Nama, Harga, dan Durasi wajib diisi!");
+    // Validasi sederhana (Tambahkan category agar wajib dipilih)
+    if(!formData.name || !formData.price || !formData.duration || !formData.category) {
+        alert("Nama, Kategori, Harga, dan Durasi wajib diisi!");
         setIsLoading(false);
         return;
     }
@@ -39,18 +39,18 @@ export default function AddProduct() {
             isActive: true
         };
 
-        // --- MODIFIKASI DI SINI: AMBIL TOKEN ---
-        const token = localStorage.getItem('adminToken'); // Ambil tiket masuk admin
+        // --- AMBIL TOKEN ---
+        const token = localStorage.getItem('adminToken'); 
 
         const res = await fetch('/api/services', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // <--- PENTING: Kirim Token ke Backend
+                'Authorization': `Bearer ${token}` 
             },
             body: JSON.stringify(payload)
         });
-        // ---------------------------------------
+        // -------------------
 
         if (!res.ok) {
             const errorData = await res.json();
@@ -109,18 +109,23 @@ export default function AddProduct() {
                     ></textarea>
                 </div>
 
-                {/* Category */}
+                {/* --- MODIFIKASI: CATEGORY DROPDOWN --- */}
                 <div className="form-group">
                     <label>Category <span style={{color:'red'}}>*</span></label>
-                    <input 
+                    <select 
                         name="category"
                         value={formData.category}
                         onChange={handleChange}
-                        type="text" 
-                        className="custom-input" 
-                        placeholder="Contoh: Cleaning / Repair" 
-                    />
+                        className="custom-input" // Menggunakan class yang sama agar styling konsisten
+                        style={{ cursor: 'pointer', appearance: 'auto' }} // Agar panah dropdown muncul
+                    >
+                        <option value="" disabled>-- Select Category --</option>
+                        <option value="Shoes Treatment">Shoes Treatment</option>
+                        <option value="Special Treatment">Special Treatment</option>
+                        <option value="Other Treatment">Other Treatment</option>
+                    </select>
                 </div>
+                {/* ------------------------------------- */}
 
                 {/* Price & Duration Row */}
                 <div className="form-row">
@@ -135,7 +140,7 @@ export default function AddProduct() {
                             placeholder="50000" 
                         />
                     </div>
-                    {/* FIELD BARU: Duration (Wajib untuk Backend Anda) */}
+                    
                     <div className="form-group">
                         <label>Duration (Estimasi) <span style={{color:'red'}}>*</span></label>
                         <input 
