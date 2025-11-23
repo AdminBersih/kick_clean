@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { ServiceOneData, ServicePricingOptions, OtherTreatmentGroups } from "@/data/service";
+import { ServiceOneData, OtherTreatmentGroups, slugToCategory } from "@/data/service";
+import { useServicesData } from "@/hooks/useServicesData";
 
 const formatIDR = (value) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
@@ -11,9 +12,20 @@ const getServiceBySlug = (slug) => ServiceOneData.find((item) => item.slug === s
 const ServiceOrder = ({ serviceSlug }) => {
     const router = useRouter();
     const service = useMemo(() => getServiceBySlug(serviceSlug), [serviceSlug]);
-    const pricing = ServicePricingOptions[serviceSlug] || [];
+    const { services, pricingOptions, loading, error } = useServicesData();
+    const categoryName = slugToCategory[serviceSlug];
+    const pricingFromCategory = (services || [])
+        .filter((svc) => svc.category === categoryName)
+        .map((svc) => ({
+            id: svc._id || svc.name,
+            name: svc.name,
+            label: `${svc.name} - ${formatIDR(svc.price)}`,
+            price: Number(svc.price) || 0,
+            note: [svc.duration, svc.description].filter(Boolean).join(" - "),
+        }));
+    const pricing = pricingFromCategory.length ? pricingFromCategory : pricingOptions[serviceSlug] || [];
     const [otherGroup, setOtherGroup] = useState("bag-wallet");
-    const [selectedPriceId, setSelectedPriceId] = useState(pricing[0]?.id || "");
+    const [selectedPriceId, setSelectedPriceId] = useState("");
     const [address, setAddress] = useState("");
     const [shippingMethod, setShippingMethod] = useState("toko");
     const [notes, setNotes] = useState("");
@@ -66,13 +78,44 @@ const ServiceOrder = ({ serviceSlug }) => {
 
     useEffect(() => {
         if (!filteredPricing.length) return;
-        if (!filteredPricing.find((item) => item.id === selectedPriceId)) {
+        const current = filteredPricing.find((item) => item.id === selectedPriceId);
+        if (!current) {
             setSelectedPriceId(filteredPricing[0].id);
         }
     }, [filteredPricing, selectedPriceId]);
 
     if (!contactLoaded) {
         return null;
+    }
+
+    if (loading) {
+        return (
+            <section className="service-details pd-120-0-90">
+                <div className="container">
+                    <p>Sedang memuat pilihan layanan...</p>
+                </div>
+            </section>
+        );
+    }
+
+    if (!pricing.length || error) {
+        return (
+            <section className="service-details pd-120-0-90">
+                <div className="container">
+                    <div className="section-title text-center">
+                        <span className="section-title__tagline">Layanan tidak tersedia</span>
+                        <h2 className="section-title__title">Tidak dapat mengambil data layanan</h2>
+                        {error && <p className="service-details__bottom-text1">{error}</p>}
+                    </div>
+                    <div className="text-center">
+                        <Link href="/service-pick" className="thm-btn">
+                            <span>Kembali ke pilihan layanan</span>
+                            <i className="liquid"></i>
+                        </Link>
+                    </div>
+                </div>
+            </section>
+        );
     }
 
     if (!service) {

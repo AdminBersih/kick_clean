@@ -1,14 +1,40 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useAuth } from '../../common/auth/AuthContext';
 
 const ContactOne = () => {
     const router = useRouter();
+    const { user } = useAuth();
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         phone: "",
         address: "",
     });
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const stored = localStorage.getItem("kickclean-contact");
+        if (!stored) return;
+
+        try {
+            const parsed = JSON.parse(stored);
+            setFormData((prev) => ({ ...prev, ...parsed }));
+        } catch (error) {
+            // ignore corrupted storage
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!user) return;
+
+        setFormData((prev) => ({
+            ...prev,
+            name: user.name || prev.name,
+            email: user.email || prev.email,
+            phone: user.phone || prev.phone,
+        }));
+    }, [user]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;

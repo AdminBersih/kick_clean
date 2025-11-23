@@ -4,7 +4,10 @@ import SEO from "../../common/seo/Seo";
 import HeaderOne from "../../common/header/HeaderOne";
 import Breadcrumb from "../../common/breadcrumb/Breadcrumb";
 import FooterOne from "../../common/footer/FooterOne";
-import { ServiceCategoryCards, ServicePricingOptions, OtherTreatmentGroups } from "@/data/service";
+import { ServiceCategoryCards, OtherTreatmentGroups, slugToCategory } from "@/data/service";
+import { useServicesData } from "@/hooks/useServicesData";
+import { useAuth } from "@/common/auth/AuthContext";
+import { addToCart, fetchCart, getOrCreateSessionId } from "@/lib/cartClient";
 import BackgroundOne from '../../../public/assets/images/pattern/services-v1-pattern.png';
 
 const gentanCenter = { lat: -7.606649, lng: 110.81686 };
@@ -18,6 +21,7 @@ const getServiceBySlug = (slug) => ServiceCategoryCards.find((item) => item.slug
 export default function OrderConfirmPage() {
     const router = useRouter();
     const { query } = router;
+    const { accessToken } = useAuth();
     const [step, setStep] = useState(1);
     const [serviceSlug, setServiceSlug] = useState(query.service || ServiceCategoryCards[0].slug);
     const [packageId, setPackageId] = useState(query.packageId || "");
@@ -34,6 +38,12 @@ export default function OrderConfirmPage() {
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
     const markerRef = useRef(null);
+    const { services, pricingOptions, loading: servicesLoading, error: servicesError, ensureServiceById } = useServicesData();
+    const [cartItems, setCartItems] = useState([]);
+    const [cartError, setCartError] = useState("");
+    const [cartLoading, setCartLoading] = useState(false);
+    const [sessionId, setSessionId] = useState("");
+    const [submitLoading, setSubmitLoading] = useState(false);
 
     useEffect(() => {
         if (!router.isReady) return;
@@ -45,6 +55,12 @@ export default function OrderConfirmPage() {
         if (query.qty) setQuantity(query.qty);
         if (query.otherGroup) setOtherGroup(query.otherGroup);
     }, [query, router.isReady]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        const sid = getOrCreateSessionId();
+        if (sid) setSessionId(sid);
+    }, []);
 
     useEffect(() => {
         try {
@@ -65,7 +81,25 @@ export default function OrderConfirmPage() {
         }
     }, [address]);
 
-    const pricing = useMemo(() => ServicePricingOptions[serviceSlug] || [], [serviceSlug]);
+    const categoryName = slugToCategory[serviceSlug];
+    const pricingFromCategory = useMemo(
+        () =>
+            (services || [])
+                .filter((svc) => svc.category === categoryName)
+                .map((svc) => ({
+                    id: svc._id || svc.name,
+                    name: svc.name,
+                    label: `${svc.name} - ${formatIDR(svc.price)}`,
+                    price: Number(svc.price) || 0,
+                    note: [svc.duration, svc.description].filter(Boolean).join(" - "),
+                })),
+        [categoryName, services]
+    );
+
+    const pricing = useMemo(() => {
+        if (pricingFromCategory.length) return pricingFromCategory;
+        return pricingOptions[serviceSlug] || [];
+    }, [pricingFromCategory, pricingOptions, serviceSlug]);
     const filteredPricing =
         serviceSlug === "cuci-tas-dompet-koper"
             ? pricing.filter((item) =>
@@ -80,13 +114,19 @@ export default function OrderConfirmPage() {
     }, [filteredPricing, packageId]);
 
     useEffect(() => {
+        if (!packageId || servicesLoading) return;
+        if (filteredPricing.find((item) => item.id === packageId)) return;
+        ensureServiceById(packageId);
+    }, [packageId, filteredPricing, ensureServiceById, servicesLoading]);
+
+    useEffect(() => {
         if (typeof window === "undefined") return;
         if (document.getElementById("leaflet-style")) return;
         const link = document.createElement("link");
         link.id = "leaflet-style";
         link.rel = "stylesheet";
         link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-        link.integrity = "sha256-o9N1j7kGStp5l9Qgsn/mI66YUVRAM1QqwLw6vHf6X1I=";
+        link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";
         link.crossOrigin = "";
         document.head.appendChild(link);
     }, []);
@@ -223,9 +263,49 @@ export default function OrderConfirmPage() {
             setStepError("Jumlah items minimal 1.");
             return false;
         }
+        if (!selectedPackage) {
+            setStepError("Pilih paket layanan terlebih dahulu.");
+            return false;
+        }
         setStepError("");
         return true;
     };
+
+    const handleAddToCart = async () => {
+        if (!selectedPackage?.id) {
+            throw new Error("ID layanan tidak tersedia, coba pilih ulang.");
+        }
+        const sid = sessionId || getOrCreateSessionId();
+        const res = await addToCart({
+            serviceId: selectedPackage.id,
+            quantity,
+            sessionId: sid,
+            token: accessToken,
+        });
+        if (res.sessionId) setSessionId(res.sessionId);
+        const items = res.cart?.items || [];
+        setCartItems(items);
+        return items;
+    };
+
+    const loadCartSnapshot = async () => {
+        try {
+            setCartLoading(true);
+            const res = await fetchCart({ sessionId, token: accessToken });
+            if (res.sessionId) setSessionId(res.sessionId);
+            setCartItems(res.cart?.items || []);
+            setCartError("");
+        } catch (err) {
+            setCartError(err?.message || "Gagal memuat keranjang");
+        } finally {
+            setCartLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (step !== 3) return;
+        loadCartSnapshot();
+    }, [step]);
 
     const renderSteps = () => (
         <div className="counter-one">
@@ -343,27 +423,39 @@ export default function OrderConfirmPage() {
                 )}
                 <div className="comment-form__input-box">
                     <label className="service-details__bottom-subtitle">Paket layanan</label>
-                    <ul className="sidebar__category-list">
-                        {filteredPricing.map((item) => (
-                            <li key={item.id}>
-                                <label>
-                                    <input
-                                        type="radio"
-                                        name="package-step1"
-                                        value={item.id}
-                                        checked={packageId === item.id}
-                                        onChange={(e) => setPackageId(e.target.value)}
-                                    />{" "}
-                                    <div className="package-option-body">
-                                        <span className="package-option-title">{item.label}</span>
-                                        <p className="service-details__bottom-text1" style={{ marginTop: 4 }}>
-                                            {item.note}
-                                        </p>
-                                    </div>
-                                </label>
-                            </li>
-                        ))}
-                    </ul>
+                    {servicesLoading && (
+                        <p className="service-details__bottom-text1">Memuat paket layanan...</p>
+                    )}
+                    {servicesError && (
+                        <p className="service-details__bottom-text1" style={{ color: "red" }}>
+                            {servicesError}
+                        </p>
+                    )}
+                    {!servicesLoading && !filteredPricing.length ? (
+                        <p className="service-details__bottom-text1">Paket layanan belum tersedia.</p>
+                    ) : (
+                        <ul className="sidebar__category-list">
+                            {filteredPricing.map((item) => (
+                                <li key={item.id}>
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            name="package-step1"
+                                            value={item.id}
+                                            checked={packageId === item.id}
+                                            onChange={(e) => setPackageId(e.target.value)}
+                                        />{" "}
+                                        <div className="package-option-body">
+                                            <span className="package-option-title">{item.label}</span>
+                                            <p className="service-details__bottom-text1" style={{ marginTop: 4 }}>
+                                                {item.note}
+                                            </p>
+                                        </div>
+                                    </label>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
                 <div className="comment-form__input-box">
                     <label className="service-details__bottom-subtitle">Nama</label>
@@ -465,11 +557,22 @@ export default function OrderConfirmPage() {
                 <button
                     className="thm-btn"
                     type="button"
-                    onClick={() => {
-                        if (validateStepOne()) setStep(2);
+                    onClick={async () => {
+                        if (!validateStepOne()) return;
+                        try {
+                            setSubmitLoading(true);
+                            await handleAddToCart();
+                            await loadCartSnapshot();
+                            setStep(2);
+                        } catch (err) {
+                            setStepError(err?.message || "Gagal menambah ke keranjang");
+                        } finally {
+                            setSubmitLoading(false);
+                        }
                     }}
+                    disabled={submitLoading}
                 >
-                    <span>Lanjutkan</span>
+                    <span>{submitLoading ? "Memproses..." : "Lanjutkan"}</span>
                     <i className="liquid"></i>
                 </button>
             </div>
@@ -498,7 +601,7 @@ export default function OrderConfirmPage() {
                                     className="thm-btn"
                                     onClick={() => {
                                         setServiceSlug(item.slug);
-                                        const newPricing = ServicePricingOptions[item.slug] || [];
+                                        const newPricing = pricingOptions[item.slug] || [];
                                         setPackageId(newPricing[0]?.id || "");
                                         setStep(1);
                                     }}
@@ -517,7 +620,14 @@ export default function OrderConfirmPage() {
                     <span>Kembali</span>
                     <i className="liquid"></i>
                 </button>
-                <button className="thm-btn" type="button" onClick={() => setStep(3)}>
+                <button
+                    className="thm-btn"
+                    type="button"
+                    onClick={async () => {
+                        if (!cartItems.length) await loadCartSnapshot();
+                        setStep(3);
+                    }}
+                >
                     <span>Lanjutkan</span>
                     <i className="liquid"></i>
                 </button>
@@ -603,6 +713,26 @@ export default function OrderConfirmPage() {
                         <span className="badge-soft">Ringkasan</span>
                     </div>
                     <ul className="info-list">
+                        {cartLoading && (
+                            <li>
+                                <span>Keranjang</span>
+                                <span className="value">Memuat...</span>
+                            </li>
+                        )}
+                        {cartError && (
+                            <li>
+                                <span>Keranjang</span>
+                                <span className="value" style={{ color: "red" }}>{cartError}</span>
+                            </li>
+                        )}
+                        {cartItems.map((item) => (
+                            <li key={item.service_id || item.name}>
+                                <span>{item.name || "Layanan"}</span>
+                                <span className="value">
+                                    {item.quantity} x {formatIDR(item.price || 0)}
+                                </span>
+                            </li>
+                        ))}
                         <li>
                             <span>Paket</span>
                             <span className="value">{selectedPackage?.label || "-"}</span>

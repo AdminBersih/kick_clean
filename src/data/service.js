@@ -109,6 +109,17 @@ export const ServiceCategoryCards = [
     },
 ];
 
+export const slugToCategory = {
+    "cuci-sepatu": "Shoes Treatment",
+    "special-treatment": "Special Treatment",
+    "cuci-tas-dompet-koper": "Other Treatment",
+};
+
+export const categoryToSlug = Object.entries(slugToCategory).reduce((acc, [slug, cat]) => {
+    acc[cat] = slug;
+    return acc;
+}, {});
+
 export const servicesCatalog = [
     { name: "Lite Clean", category: "Shoes Treatment", price: 30000, duration: "2 hari", description: "Cuci sepatu bagian upper dan midsole." },
     { name: "Deep Clean", category: "Shoes Treatment", price: 35000, duration: "3-4 hari", description: "Cuci bersih semua bagian sepatu seperti outsole, midsole, insole, tali sepatu." },
@@ -138,7 +149,7 @@ export const servicesCatalog = [
     { name: "Cap", category: "Other Treatment", price: 25000, duration: "1 hari", description: "Treatment cap/topi." },
 ];
 
-const slugToNames = {
+export const slugToNames = {
     "cuci-sepatu": ["Lite Clean", "Deep Clean", "White Shoes", "Women & Kids", "Boots & Outdoors", "Suede Treatment", "Sepatu Roda"],
     "special-treatment": [
         "OneDay Service",
@@ -162,21 +173,42 @@ const slugToNames = {
     "helm-cap-cleaning": ["Helm", "Cap"],
 };
 
-const makeId = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+const makeId = (name = "") => name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+const formatIDR = (value) =>
+    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(Number(value) || 0);
+const normalizeName = (name = "") => name.toLowerCase().trim();
 
-export const ServicePricingOptions = Object.entries(slugToNames).reduce((acc, [slug, names]) => {
-    acc[slug] = names
-        .map((name) => servicesCatalog.find((item) => item.name === name))
-        .filter(Boolean)
-        .map((item) => ({
-            id: makeId(item.name),
-            name: item.name,
-            label: `${item.name} - Rp${item.price.toLocaleString("id-ID")}`,
-            price: item.price,
-            note: `${item.duration} · ${item.description}`,
-        }));
-    return acc;
-}, {});
+export const buildPricingOptions = (services = []) => {
+    const source = services?.length ? services : servicesCatalog;
+    const indexed = new Map(
+        source
+            .filter((svc) => svc && svc.name)
+            .map((svc) => [normalizeName(svc.name), svc])
+    );
+
+    return Object.entries(slugToNames).reduce((acc, [slug, names]) => {
+        acc[slug] = names
+            .map((name) => {
+                const svc = indexed.get(normalizeName(name));
+                if (!svc) return null;
+                return {
+                    id: svc._id || makeId(name),
+                    name: svc.name,
+                    label: `${svc.name} - ${formatIDR(svc.price)}`,
+                    price: Number(svc.price) || 0,
+                    note: [svc.duration, svc.description].filter(Boolean).join(" - "),
+                };
+            })
+            .filter(Boolean);
+        return acc;
+    }, {});
+};
+
+export const findSlugForServiceName = (name) => {
+    const target = normalizeName(name);
+    const entry = Object.entries(slugToNames).find(([, names]) => names.some((n) => normalizeName(n) === target));
+    return entry ? entry[0] : null;
+};
 
 export const OtherTreatmentGroups = [
     {
