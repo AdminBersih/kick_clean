@@ -3,7 +3,7 @@ import dbConnect from "../../../lib/dbConnect";
 import User from "../../../models/User";
 import { signAccessToken, signRefreshToken } from "../../../lib/jwt";
 import { mergeGuestCartIntoUser } from "../../../lib/cart";
-import cookie from "cookie";
+import { serialize } from "cookie";
 
 export default async function handler(req, res) {
   await dbConnect();
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
   const refreshToken = signRefreshToken({ id: user._id });
 
   res.setHeader("Set-Cookie",
-    cookie.serialize("refreshToken", refreshToken, {
+    serialize("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",

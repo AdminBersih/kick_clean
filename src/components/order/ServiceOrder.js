@@ -117,7 +117,7 @@ const ServiceOrder = ({ serviceSlug }) => {
                                 <h4 className="sidebar__title">Pilih paket &amp; harga</h4>
                                 {serviceSlug === "cuci-tas-dompet-koper" && (
                                     <div className="comment-form__input-box">
-                                        <p className="service-details__bottom-subtitle">Pilih jenis Other Treatment</p>
+                                        <label className="service-details__bottom-subtitle">Pilih jenis Other Treatment</label>
                                         <ul className="sidebar__category-list">
                                             {OtherTreatmentGroups.map((group) => (
                                                 <li key={group.id}>
@@ -136,26 +136,32 @@ const ServiceOrder = ({ serviceSlug }) => {
                                         </ul>
                                     </div>
                                 )}
-                                <p className="service-details__bottom-subtitle">Pricelist {service.heading}</p>
-                                <ul className="sidebar__category-list">
-                                    {filteredPricing.map((option) => (
-                                        <li key={option.id}>
-                                            <label>
-                                                <input
-                                                    type="radio"
-                                                    name="pricing"
-                                                    value={option.id}
-                                                    checked={selectedPriceId === option.id}
-                                                    onChange={(e) => setSelectedPriceId(e.target.value)}
-                                                />{" "}
-                                                {option.label}
-                                            </label>
-                                            {selectedPriceId === option.id && option.note && (
-                                                <p className="service-details__bottom-text1">{option.note}</p>
-                                            )}
-                                        </li>
-                                    ))}
-                                </ul>
+                                <div className="comment-form__input-box">
+                                    <label className="service-details__bottom-subtitle">Paket layanan</label>
+                                    <ul className="sidebar__category-list">
+                                        {filteredPricing.map((option) => (
+                                            <li key={option.id}>
+                                                <label>
+                                                    <input
+                                                        type="radio"
+                                                        name="pricing"
+                                                        value={option.id}
+                                                        checked={selectedPriceId === option.id}
+                                                        onChange={(e) => setSelectedPriceId(e.target.value)}
+                                                    />{" "}
+                                                    <div className="package-option-body">
+                                                        <span className="package-option-title">{option.label}</span>
+                                                        {option.note && (
+                                                            <p className="service-details__bottom-text1" style={{ marginTop: 4 }}>
+                                                                {option.note}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </label>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
                             </div>
 
                             <div className="sidebar__category">

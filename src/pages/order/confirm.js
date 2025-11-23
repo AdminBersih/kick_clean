@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import SEO from "../../common/seo/Seo";
 import HeaderOne from "../../common/header/HeaderOne";
@@ -7,7 +7,8 @@ import FooterOne from "../../common/footer/FooterOne";
 import { ServiceCategoryCards, ServicePricingOptions, OtherTreatmentGroups } from "@/data/service";
 import BackgroundOne from '../../../public/assets/images/pattern/services-v1-pattern.png';
 
-const defaultLocation = { lat: -7.606649, lng: 110.81686 };
+const gentanCenter = { lat: -7.606649, lng: 110.81686 };
+const defaultLocation = { lat: gentanCenter.lat, lng: gentanCenter.lng };
 
 const formatIDR = (value) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
@@ -29,6 +30,10 @@ export default function OrderConfirmPage() {
     const [location, setLocation] = useState({ lat: defaultLocation.lat, lng: defaultLocation.lng });
     const [locationStatus, setLocationStatus] = useState("");
     const [stepError, setStepError] = useState("");
+    const [mapReady, setMapReady] = useState(false);
+    const mapContainerRef = useRef(null);
+    const mapRef = useRef(null);
+    const markerRef = useRef(null);
 
     useEffect(() => {
         if (!router.isReady) return;
@@ -74,26 +79,131 @@ export default function OrderConfirmPage() {
         }
     }, [filteredPricing, packageId]);
 
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        if (document.getElementById("leaflet-style")) return;
+        const link = document.createElement("link");
+        link.id = "leaflet-style";
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        link.integrity = "sha256-o9N1j7kGStp5l9Qgsn/mI66YUVRAM1QqwLw6vHf6X1I=";
+        link.crossOrigin = "";
+        document.head.appendChild(link);
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        if (step !== 1) {
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+                markerRef.current = null;
+                setMapReady(false);
+            }
+            return;
+        }
+        if (!mapContainerRef.current || mapRef.current) return;
+        const initMap = async () => {
+            const leaflet = await import("leaflet");
+            if (!isMounted || !mapContainerRef.current) return;
+            const L = leaflet.default;
+
+            const markerIcon = L.icon({
+                iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+                shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+                iconAnchor: [12, 41],
+            });
+
+            const map = L.map(mapContainerRef.current).setView([location.lat, location.lng], 16);
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                attribution: "(c) OpenStreetMap",
+                maxZoom: 19,
+            }).addTo(map);
+
+            const marker = L.marker([location.lat, location.lng], { draggable: true, icon: markerIcon }).addTo(map);
+            marker.on("dragend", (e) => {
+                const latlng = e.target.getLatLng();
+                setLocation({ lat: latlng.lat, lng: latlng.lng });
+                setLocationStatus("Pin digeser manual untuk akurasi lokasi.");
+            });
+            map.on("click", (e) => {
+                marker.setLatLng(e.latlng);
+                setLocation({ lat: e.latlng.lat, lng: e.latlng.lng });
+                setLocationStatus("Pin di-set melalui klik peta.");
+            });
+
+            mapRef.current = map;
+            markerRef.current = marker;
+            setMapReady(true);
+        };
+        initMap();
+        return () => {
+            isMounted = false;
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+                markerRef.current = null;
+            }
+        };
+    }, [step]);
+
+    useEffect(() => {
+        if (!mapReady || !mapRef.current || !markerRef.current) return;
+        markerRef.current.setLatLng([location.lat, location.lng]);
+        mapRef.current.setView([location.lat, location.lng], mapRef.current.getZoom());
+    }, [location, mapReady]);
+
     const service = getServiceBySlug(serviceSlug);
     const selectedPackage = filteredPricing.find((item) => item.id === packageId) || filteredPricing[0];
     const subtotal = selectedPackage ? (Number(quantity) || 1) * selectedPackage.price : 0;
 
-    const handleGeoLocate = () => {
+    const handleGeoLocate = async () => {
         if (typeof window === "undefined" || !navigator.geolocation) {
             setLocationStatus("Perangkat tidak mendukung geolokasi.");
             return;
         }
-        setLocationStatus("Mengambil lokasi...");
+
+        if (!window.isSecureContext) {
+            setLocationStatus("Izin lokasi diblokir karena koneksi belum HTTPS. Gunakan pin manual atau fokus ke Gentan.");
+            return;
+        }
+
+        setLocationStatus("Mengambil lokasi akurat dari browser...");
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                setLocationStatus("Lokasi berhasil diatur.");
+                setLocationStatus("Lokasi berhasil diatur dari perangkat.");
             },
-            () => {
-                setLocationStatus("Tidak dapat mengambil lokasi. Pastikan izin lokasi aktif.");
+            async () => {
+                try {
+                    const res = await fetch("https://ipapi.co/json/");
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.latitude && data.longitude) {
+                            setLocation({ lat: data.latitude, lng: data.longitude });
+                            setLocationStatus("Lokasi diperkirakan dari jaringan. Geser pin untuk presisi.");
+                            return;
+                        }
+                    }
+                    setLocationStatus("Tidak dapat mengambil lokasi. Pastikan izin lokasi aktif atau isi manual.");
+                } catch (err) {
+                    setLocationStatus("Tidak dapat mengambil lokasi. Pastikan izin lokasi aktif atau isi manual.");
+                }
             },
             { enableHighAccuracy: true, timeout: 7000 }
         );
+    };
+
+    const handleManualLatLngChange = (field, value) => {
+        const parsed = parseFloat(value);
+        if (Number.isNaN(parsed)) return;
+        setLocation((prev) => ({ ...prev, [field]: parsed }));
+        setLocationStatus("Koordinat diperbarui secara manual.");
+    };
+
+    const handleFocusGentan = () => {
+        setLocation({ lat: gentanCenter.lat, lng: gentanCenter.lng });
+        setLocationStatus("Pin dipusatkan ke area Gentan, Kabupaten Sukoharjo.");
     };
 
     const validateStepOne = () => {
@@ -157,22 +267,52 @@ export default function OrderConfirmPage() {
         <div className="service-details__bottom">
             <div className="sidebar__category" style={{ marginTop: 0 }}>
                 <div className="sidebar__title">Titik lokasi</div>
-                <div className="contact-page-google-map" style={{ marginBottom: 15 }}>
-                    <iframe
-                        className="contact-page-google-map__one"
-                        src={`https://maps.google.com/maps?q=${location.lat},${location.lng}&z=14&output=embed`}
-                        allowFullScreen
-                    ></iframe>
-                </div>
-                <p className="service-details__bottom-text1">
-                    Latitude: {location.lat.toFixed(5)} | Longitude: {location.lng.toFixed(5)}
+                <p className="service-details__bottom-text1" style={{ marginBottom: 10 }}>
+                    Ambil lokasi akurat dengan geolokasi browser lalu rapikan pin manual di area Gentan, Sukoharjo.
                 </p>
-                <button className="thm-btn" type="button" onClick={handleGeoLocate}>
-                    <span>Gunakan lokasi saya</span>
-                    <i className="liquid"></i>
-                </button>
+                <div
+                    className="contact-page-google-map__one"
+                    ref={mapContainerRef}
+                    style={{ height: 360, borderRadius: 12, overflow: "hidden", marginBottom: 15 }}
+                ></div>
+                <div className="d-flex" style={{ gap: 10, flexWrap: "wrap", marginBottom: 10 }}>
+                    <button className="thm-btn" type="button" onClick={handleGeoLocate}>
+                        <span>Gunakan lokasi saya</span>
+                        <i className="liquid"></i>
+                    </button>
+                    <button className="thm-btn" type="button" onClick={handleFocusGentan} style={{ background: "#eef5ff" }}>
+                        <span style={{ color: "#1a1a1a" }}>Fokus ke Gentan</span>
+                        <i className="liquid"></i>
+                    </button>
+                </div>
+                <div className="row gutter-y-10">
+                    <div className="col-md-6">
+                        <label className="service-details__bottom-subtitle">Latitude</label>
+                        <input
+                            type="number"
+                            step="0.00001"
+                            className="comment-form__textarea"
+                            value={location.lat}
+                            onChange={(e) => handleManualLatLngChange("lat", e.target.value)}
+                        />
+                    </div>
+                    <div className="col-md-6">
+                        <label className="service-details__bottom-subtitle">Longitude</label>
+                        <input
+                            type="number"
+                            step="0.00001"
+                            className="comment-form__textarea"
+                            value={location.lng}
+                            onChange={(e) => handleManualLatLngChange("lng", e.target.value)}
+                        />
+                    </div>
+                </div>
+                <p className="service-details__bottom-text1" style={{ marginTop: 8 }}>
+                    Koordinat: {location.lat.toFixed(5)}, {location.lng.toFixed(5)} - geser atau klik pin di peta untuk titik
+                    jemput/antar yang presisi.
+                </p>
                 {locationStatus && (
-                    <p className="service-details__bottom-text1" style={{ color: "var(--thm-base)", marginTop: 8 }}>
+                    <p className="service-details__bottom-text1" style={{ color: "var(--thm-base)", marginTop: 4 }}>
                         {locationStatus}
                     </p>
                 )}
@@ -457,7 +597,7 @@ export default function OrderConfirmPage() {
                         <div>
                             <p className="label">Detail order</p>
                             <h4>
-                                {service?.heading || "Layanan belum dipilih"} • {selectedPackage?.label || "Paket belum dipilih"}
+                                {service?.heading || "Layanan belum dipilih"} - {selectedPackage?.label || "Paket belum dipilih"}
                             </h4>
                         </div>
                         <span className="badge-soft">Ringkasan</span>
@@ -547,3 +687,4 @@ export default function OrderConfirmPage() {
         </>
     );
 }
+
