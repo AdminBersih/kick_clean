@@ -1,92 +1,146 @@
 // src/pages/admin/products.js
+import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Plus, MoreHorizontal, TrendingUp } from 'lucide-react';
-import Image from 'next/image'; // Pastikan pakai Next Image
+import { Plus, Loader2, Trash2 } from 'lucide-react'; 
 import Link from 'next/link';
 
 export default function AllProducts() {
-  // Data Dummy untuk simulasi tampilan
-  const products = Array(6).fill({
-    name: "Battery 12V High Power",
-    category: "Battery",
-    price: "₹110.40", // Ganti mata uang nanti jika perlu
-    summary: "Lorem ipsum is placeholder text commonly used in the graphic.",
-    sales: 1269,
-    remaining: 1269
-  });
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // 1. Fetch Data
+  useEffect(() => {
+    async function fetchServices() {
+      try {
+        const token = localStorage.getItem('adminToken');
+        const res = await fetch('/api/services', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!res.ok) throw new Error('Gagal mengambil data');
+        
+        const data = await res.json();
+        setProducts(data.services || []);
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchServices();
+  }, []);
+
+  // 2. Fungsi Delete
+  const handleDelete = async (id) => {
+    const confirmDelete = confirm("Apakah Anda yakin ingin menghapus layanan ini?");
+    if (!confirmDelete) return;
+
+    try {
+        const token = localStorage.getItem('adminToken');
+        const res = await fetch(`/api/services/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!res.ok) throw new Error("Gagal menghapus data");
+
+        setProducts((prevProducts) => prevProducts.filter((item) => item._id !== id));
+        alert("Layanan berhasil dihapus!");
+
+    } catch (error) {
+        console.error(error);
+        alert(error.message || "Terjadi kesalahan saat menghapus");
+    }
+  };
+
+  // Helper Format Rupiah
+  const formatRupiah = (number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0
+    }).format(number);
+  };
 
   return (
     <AdminLayout>
-      {/* --- Header Section --- */}
       <div className="page-header">
         <div className="page-title">
-          <h1>All Products</h1>
+          <h1>All Products (Services)</h1>
           <div className="breadcrumb">Home &gt; All Products</div>
         </div>
         
-        {/* Tombol Add New Product */}
         <Link href="/admin/products/add" className="btn-dark">
             <Plus size={18} />
-            ADD NEW PRODUCT
+            ADD NEW SERVICE
         </Link>
       </div>
 
-      {/* --- Product Grid --- */}
-      <div className="products-grid">
-        {products.map((item, index) => (
-          <ProductCard key={index} data={item} />
-        ))}
-      </div>
+      {loading ? (
+        <div style={{display:'flex', justifyContent:'center', padding:'50px'}}>
+            <Loader2 className="animate-spin" />
+        </div>
+      ) : error ? (
+        <div className="error-msg">Error: {error}</div>
+      ) : (
+        <div className="products-grid">
+            {products.length === 0 ? (
+                <p>Belum ada layanan/produk yang ditambahkan.</p>
+            ) : (
+                products.map((item) => (
+                <ProductCard 
+                    key={item._id} 
+                    data={item} 
+                    formatPrice={formatRupiah}
+                    onDelete={() => handleDelete(item._id)} 
+                />
+                ))
+            )}
+        </div>
+      )}
     </AdminLayout>
   );
 }
 
-// --- Komponen Kartu Produk (Internal) ---
-function ProductCard({ data }) {
+// --- KOMPONEN PRODUCT CARD (TANPA GAMBAR) ---
+function ProductCard({ data, formatPrice, onDelete }) {
     return (
         <div className="product-card">
-            {/* Bagian Atas: Gambar & Info */}
             <div className="pc-header">
-                <div className="pc-image">
-                   {/* Placeholder Image (Ganti src dengan gambar asli Anda nanti) */}
-                   <img src="https://placehold.co/100x100/png" alt="Product" style={{width:'100%', borderRadius: '8px'}} />
-                </div>
-                <div className="pc-info">
-                    <h3 className="pc-title">Lorem Ipsum</h3>
+                {/* Bagian Gambar DIHAPUS di sini */}
+                
+                <div className="pc-info" style={{ flex: 1 }}> {/* Tambah flex:1 agar teks memenuhi ruang */}
+                    <h3 className="pc-title">{data.name}</h3>
                     <span className="pc-category">{data.category}</span>
-                    <div className="pc-price">{data.price}</div>
+                    <div className="pc-price">{formatPrice(data.price)}</div>
                 </div>
-                <button className="pc-menu-btn">
-                    <MoreHorizontal size={20} color="#9CA3AF" />
+                
+                <button 
+                    className="pc-menu-btn" 
+                    onClick={onDelete}
+                    title="Hapus Layanan"
+                    style={{color: '#EF4444'}}
+                >
+                    <Trash2 size={20} />
                 </button>
             </div>
 
-            {/* Bagian Tengah: Summary */}
             <div className="pc-summary">
-                <h4>Summary</h4>
-                <p>{data.summary}</p>
+                <h4>Description</h4>
+                <p>{data.description || "No description provided."}</p>
             </div>
 
-            {/* Bagian Bawah: Stats Box */}
             <div className="pc-stats-box">
-                {/* Sales Row */}
                 <div className="stat-row mb-2">
-                    <span className="label">Sales</span>
+                    <span className="label">Duration</span>
                     <div className="value-group">
-                        <TrendingUp size={14} color="#D97706" />
-                        <span>{data.sales}</span>
-                    </div>
-                </div>
-                <hr className="divider"/>
-                {/* Remaining Row */}
-                <div className="stat-row mt-2">
-                    <span className="label">Remaining Products</span>
-                    <div className="value-group">
-                        {/* Progress Bar Visual */}
-                        <div className="progress-track">
-                            <div className="progress-fill"></div>
-                        </div>
-                        <span>{data.remaining}</span>
+                        <span>{data.duration}</span>
                     </div>
                 </div>
             </div>

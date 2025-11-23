@@ -375,18 +375,6 @@
   position: relative;
 }
 
-#admin-scope .pc-image {
-  width: 80px;
-  height: 80px;
-  background: #F3F4F6;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-#admin-scope .pc-image img {
-  width: 100%;
-  border-radius: 8px;
-}
 
 #admin-scope .pc-info {
   display: flex;
