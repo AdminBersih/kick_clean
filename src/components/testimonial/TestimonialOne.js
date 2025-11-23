@@ -63,9 +63,6 @@ const TestimonialOne = () => {
                                           <p>{item.description}</p>
                                       </div>
                                       <div className="client-info">
-                                          <div className="img">
-                                              <img src={item.image} alt={item.alt} />
-                                          </div>
                                           <div className="text">
                                               <h2>{item.name}</h2>
                                               <p>{item.position}</p>

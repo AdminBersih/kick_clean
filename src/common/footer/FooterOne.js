@@ -9,7 +9,6 @@ const FooterOne = () => {
             <footer className="footer-one">
                 <div
                     className="footer-one__bg"
-                    style={{ backgroundImage: `url(/assets/images/backgrounds/footer-v1-bg.jpg)` }}
                 ></div>
 
                 <div className="footer-one__top">

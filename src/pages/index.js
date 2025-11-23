@@ -9,6 +9,7 @@ import TestimonialOne from "../components/testimonial/TestimonialOne";
 import CtaOne from "../components/cta/CtaOne";
 import FooterOne from "../common/footer/FooterOne";
 import HeroTwo from "@/components/hero/HeroTwo";
+import FeaturesTwo from "@/components/features/FeaturesTwo";
 
 export default function Home() {
 	return (
@@ -17,6 +18,7 @@ export default function Home() {
 			<HeaderOne />
       		<HeroTwo />
 			<AboutOne />
+			<FeaturesTwo />
 			<ServiceOne />
 			<ProjectOne />
 			<ContactOne />

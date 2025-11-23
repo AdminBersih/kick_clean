@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import Link from 'next/link';
 import { TeamOneData } from '@/data/team';
 import BackgroundOne from '../../../public/assets/images/pattern/team-v1-pattern.png';
 
@@ -67,9 +68,9 @@ const TeamTwo = () => {
                                                   <p>{item.position}</p>
                                               </div>
                                               <div className="social-link">
-                                                  <a href={item.facebook}><i className="fab fa-facebook"></i></a>
-                                                  <a href={item.pinterest}><i className="fab fa-twitter"></i></a>
-                                                  <a href={item.pinterest}><i className="fab fa-pinterest-p"></i></a>
+                                                  <Link href={item.facebook}><i className="fab fa-facebook"></i></Link>
+                                                  <Link href={item.pinterest}><i className="fab fa-twitter"></i></Link>
+                                                  <Link href={item.pinterest}><i className="fab fa-pinterest-p"></i></Link>
                                               </div>
                                           </div>
                                       </div>

@@ -3,6 +3,7 @@ import HeaderOne from "../common/header/HeaderOne";
 import Breadcrumb from "../common/breadcrumb/Breadcrumb";
 import TasDompetKoper from "../components/service/TasDompetKoper";
 import FooterOne from "../common/footer/FooterOne";
+import ContactOne from "../components/contact/ContactOne";
 
 export default function TasDompetKoperPage() {
     return (
@@ -11,6 +12,7 @@ export default function TasDompetKoperPage() {
             <HeaderOne />
             <Breadcrumb heading="Cuci Tas, Dompet & Koper" currentPage="Cuci Tas &amp; Koper" />
             <TasDompetKoper />
+            <ContactOne />
             <FooterOne />
         </>
     );

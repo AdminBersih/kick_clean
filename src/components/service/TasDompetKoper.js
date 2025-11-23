@@ -71,94 +71,94 @@ const TasDompetKoper = () => {
                     </div>
                 </div>
 
-                <div className="service-details__bottom-text4">
-                    <h3 className="service-details__bottom-subtitle">
-                        Bag &amp; Wallet (2–3 hari, maksimal 7 hari)
-                    </h3>
+            </div>
+            <div className="service-details__bottom-text4">
+                <h3 className="service-details__bottom-subtitle">
+                    Bag &amp; Wallet (2–3 hari, maksimal 7 hari)
+                </h3>
 
-                    <ServiceAccordion
-                        items={[
-                            {
-                                title: "Small – Rp30.000",
-                                content: (
-                                    <p>
-                                        Untuk dompet, pouch kecil, atau tas mini dengan ukuran ringkas. Cocok untuk
-                                        membersihkan noda ringan, debu, dan kotoran harian.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Medium – Rp40.000",
-                                content: (
-                                    <p>
-                                        Untuk sling bag, tas selempang, atau handbag dengan ukuran sedang. Fokus pada
-                                        pembersihan bodi utama, tali, dan bagian dalam.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Large – Rp50.000",
-                                content: (
-                                    <p>
-                                        Untuk tote bag besar, tas kerja, atau backpack standar. Direkomendasikan untuk
-                                        tas yang sering dibawa ke kantor, kampus, atau sekolah.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Tas Gunung – Rp55.000",
-                                content: (
-                                    <p>
-                                        Khusus untuk carrier dan tas gunung yang sering terkena lumpur, debu, dan bau
-                                        keringat. Pembersihan menyeluruh agar lebih layak dipakai kembali untuk
-                                        pendakian berikutnya.
-                                    </p>
-                                ),
-                            },
-                        ]}
-                    />
+                <ServiceAccordion
+                    items={[
+                        {
+                            title: "Small – Rp30.000",
+                            content: (
+                                <p>
+                                    Untuk dompet, pouch kecil, atau tas mini dengan ukuran ringkas. Cocok untuk
+                                    membersihkan noda ringan, debu, dan kotoran harian.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Medium – Rp40.000",
+                            content: (
+                                <p>
+                                    Untuk sling bag, tas selempang, atau handbag dengan ukuran sedang. Fokus pada
+                                    pembersihan bodi utama, tali, dan bagian dalam.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Large – Rp50.000",
+                            content: (
+                                <p>
+                                    Untuk tote bag besar, tas kerja, atau backpack standar. Direkomendasikan untuk
+                                    tas yang sering dibawa ke kantor, kampus, atau sekolah.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Tas Gunung – Rp55.000",
+                            content: (
+                                <p>
+                                    Khusus untuk carrier dan tas gunung yang sering terkena lumpur, debu, dan bau
+                                    keringat. Pembersihan menyeluruh agar lebih layak dipakai kembali untuk
+                                    pendakian berikutnya.
+                                </p>
+                            ),
+                        },
+                    ]}
+                />
 
-                    <h3 className="service-details__bottom-subtitle">Koper &amp; Kabin (maksimal 7 hari)</h3>
+                <h3 className="service-details__bottom-subtitle">Koper &amp; Kabin (maksimal 7 hari)</h3>
 
-                    <ServiceAccordion
-                        defaultOpenIndex={0}
-                        items={[
-                            {
-                                title: "Small – Rp60.000",
-                                content: (
-                                    <p>
-                                        Koper kabin berukuran kecil, cocok untuk kamu yang sering bepergian singkat.
-                                        Kami membersihkan bagian luar, pegangan, roda, serta area dalam koper.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Medium – Rp70.000",
-                                content: (
-                                    <p>
-                                        Untuk koper ukuran sedang, baik untuk perjalanan bisnis maupun liburan
-                                        keluarga. Pembersihan lebih detail dengan perhatian ekstra pada bagian dalam
-                                        yang sering kotor.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Large – Rp80.000",
-                                content: (
-                                    <p>
-                                        Koper besar untuk perjalanan jauh. Kami pastikan koper kembali bersih, tidak
-                                        bau, dan lebih enak disimpan di rumah tanpa rasa risih.
-                                    </p>
-                                ),
-                            },
-                        ]}
-                    />
+                <ServiceAccordion
+                    defaultOpenIndex={0}
+                    items={[
+                        {
+                            title: "Small – Rp60.000",
+                            content: (
+                                <p>
+                                    Koper kabin berukuran kecil, cocok untuk kamu yang sering bepergian singkat.
+                                    Kami membersihkan bagian luar, pegangan, roda, serta area dalam koper.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Medium – Rp70.000",
+                            content: (
+                                <p>
+                                    Untuk koper ukuran sedang, baik untuk perjalanan bisnis maupun liburan
+                                    keluarga. Pembersihan lebih detail dengan perhatian ekstra pada bagian dalam
+                                    yang sering kotor.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Large – Rp80.000",
+                            content: (
+                                <p>
+                                    Koper besar untuk perjalanan jauh. Kami pastikan koper kembali bersih, tidak
+                                    bau, dan lebih enak disimpan di rumah tanpa rasa risih.
+                                </p>
+                            ),
+                        },
+                    ]}
+                />
 
-                    <p>
-                        Untuk tas atau koper dengan noda khusus (misalnya jamur berat atau karat), tim kami akan
-                        menginformasikan kemungkinan hasil sebelum pengerjaan dimulai.
-                    </p>
-                </div>
+                <p>
+                    Untuk tas atau koper dengan noda khusus (misalnya jamur berat atau karat), tim kami akan
+                    menginformasikan kemungkinan hasil sebelum pengerjaan dimulai.
+                </p>
             </div>
         </ServiceDetailLayout>
     );

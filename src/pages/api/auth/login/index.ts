@@ -1,9 +1,9 @@
 import bcrypt from "bcryptjs";
-import dbConnect from "../../../lib/dbConnect";
-import User from "../../../models/User";
-import { signAccessToken, signRefreshToken } from "../../../lib/jwt";
-import { mergeGuestCartIntoUser } from "../../../lib/cart";
-import { serialize } from "cookie"; // Named import (ambil fungsi spesifik)
+import dbConnect from "../../../../lib/dbConnect";
+import User from "../../../../models/User";
+import { signAccessToken, signRefreshToken } from "../../../../lib/jwt";
+import { mergeGuestCartIntoUser } from "../../../../lib/cart";
+import * as cookie from "cookie";
 
 export default async function handler(req, res) {
   await dbConnect();
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      path: "/api/auth",
+      path: "/",
       maxAge: 60 * 60 * 24 * 1,
     })
   );
@@ -41,6 +41,7 @@ export default async function handler(req, res) {
   res.json({
     message: "Logged in",
     accessToken,
+    refreshToken,
     user: { id: user._id, name: user.name, email: user.email, role: user.role },
   });
 }

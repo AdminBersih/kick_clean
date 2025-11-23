@@ -3,6 +3,7 @@ import HeaderOne from "../common/header/HeaderOne";
 import Breadcrumb from "../common/breadcrumb/Breadcrumb";
 import SpecialTreatment from "../components/service/SpecialTreatment";
 import FooterOne from "../common/footer/FooterOne";
+import ContactOne from "../components/contact/ContactOne";
 
 export default function SpecialTreatmentPage() {
     return (
@@ -11,6 +12,7 @@ export default function SpecialTreatmentPage() {
             <HeaderOne />
             <Breadcrumb heading="Special Treatment Sepatu" currentPage="Special Treatment" />
             <SpecialTreatment />
+            <ContactOne />
             <FooterOne />
         </>
     );

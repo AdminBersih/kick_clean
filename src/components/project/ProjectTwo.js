@@ -52,7 +52,7 @@ const ProjectTwo = () => {
                                                 <h3><Link href={item.link}>{item.heading}</Link></h3>
                                             </div>
                                             <ul>
-                                                <li><a href={item.image_popup} className="img-popup"><i className="icon-plus"></i></a></li>
+                                                <li><Link href={item.image_popup} className="img-popup"><i className="icon-plus"></i></Link></li>
                                                 <li><Link href={item.link}><span className="icon-link"></span></Link></li>
                                             </ul>
                                         </div>

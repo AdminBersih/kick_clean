@@ -15,7 +15,7 @@ export default function ContactPage() {
                 heading="Kontak"
                 currentPage="Kontak" 
             />
-			<ContactInfo />
+			{/* <ContactInfo /> */}
 			<ContactThree />
 			<ContactMap />
 			<FooterOne />

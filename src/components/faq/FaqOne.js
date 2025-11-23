@@ -38,41 +38,38 @@ const FaqOne = () => {
 
     return (
         <>
-            <section class="faq-one pd-120-0-120">
-                <div class="container">
-                    <div class="section-title__style2">
-                        <div class="section-title">
-                            <span class="section-title__tagline">Pertanyaan seputar Kick Clean</span>
-                            <h2 class="section-title__title">Ada yang ingin ditanyakan?</h2>
+            <section className="faq-one pd-120-0-120">
+                <div className="container">
+                    <div className="section-title__style2">
+                        <div className="section-title">
+                            <span className="section-title__tagline">Pertanyaan seputar Kick Clean</span>
+                            <h2 className="section-title__title">Ada yang ingin ditanyakan?</h2>
                         </div>
-                        <div class="text-box">
+                        <div className="text-box">
                             <p>Kami rangkum beberapa hal yang sering ditanyakan pelanggan sebelum memakai layanan Kick Clean Gentan.</p>
                         </div>
                     </div>
-                    <div class="row">
+                    <div className="row">
                         {/* Start Faq One Content */}
-                        <div class="col-xl-7">
-                            <div class="faq-one__content">
-                                <div class="faq-one__faq">
-                                    <div class="accrodion-grp faq-one-accrodion" data-grp-name="faq-one-accrodion-1">
+                        <div className="col-xl-7">
+                            <div className="faq-one__content">
+                                <div className="faq-one__faq">
+                                    <div className="accrodion-grp faq-one-accrodion" data-grp-name="faq-one-accrodion-1">
                                         {FaqOneData.map((item, i) => (
                                             <div key={i} className={`accrodion wow fadeInUp ${item.open}`} data-wow-delay={item.delay} data-wow-duration={item.duration}>
-                                                <div class="accrodion-title">
-                                                    <div class="accrodion-title-inner">
-                                                        <div class="icon">
-                                                            <span class="icon-maps-and-flags"></span>
+                                                <div className="accrodion-title">
+                                                    <div className="accrodion-title-inner">
+                                                        <div className="icon">
+                                                            <span className="icon-maps-and-flags"></span>
                                                         </div>
-                                                        <div class="text">
+                                                        <div className="text">
                                                             <h4>{item.heading}</h4>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="accrodion-content">
-                                                    <div class="inner">
-                                                        <div class="img-box">
-                                                            <img src={item.image} alt={item.alt} />
-                                                        </div>
-                                                        <div class="text">
+                                                <div className="accrodion-content">
+                                                    <div className="inner">
+                                                        <div className="text">
                                                             <p>{item.description}</p>
                                                         </div>
                                                     </div>
@@ -86,9 +83,9 @@ const FaqOne = () => {
                         {/* End Faq One Content */}
 
                         {/* Start Faq One Img */}
-                        <div class="col-xl-5">
-                            <div class="faq-one__img">
-                                <img src="/assets/images/resources/faq-v1-img2.jpg" alt="" />
+                        <div className="col-xl-5">
+                            <div className="faq-one__img">
+                                <img src="/assets/images/resources/faq-v1-img2.png" alt="" />
                             </div>
                         </div>
                         {/* End Faq One Img */}

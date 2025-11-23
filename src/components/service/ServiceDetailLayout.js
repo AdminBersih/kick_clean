@@ -33,7 +33,9 @@ const ServiceDetailLayout = ({
 
                         <div className="col-xl-8 order-1">
                             <div className="service-details__top-img">
-                                <img src={heroImage} alt={heroAlt} />
+                                <a href={heroImage} className="img-popup" data-group="service-hero">
+                                    <img src={heroImage} alt={heroAlt} />
+                                </a>
                             </div>
                         </div>
                     </div>

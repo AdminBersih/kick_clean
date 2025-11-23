@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import TeamOne from './TeamOne';
 
 const TeamDetails = () => {
@@ -28,15 +29,15 @@ const TeamDetails = () => {
                                     <p>Tentang : Rian adalah founder sekaligus sneaker care specialist yang memastikan setiap cuci, repaint, hingga treatment berjalan sesuai SOP. Ia telah menangani ratusan pasangan sepatu koleksi komunitas di Sukoharjo.</p>
                                 </div>
                                 <div class="number">
-                                    <p>WhatsApp: <a href="https://wa.me/6285659176079" target="_blank" rel="noreferrer">0856-5917-6079</a></p>
+                                    <p>WhatsApp: <Link href="https://wa.me/6285659176079" target="_blank" rel="noreferrer">0856-5917-6079</Link></p>
                                 </div>
                                 <div class="social-icon">
                                     <div class="title">
                                         <h6>Ikuti kami:</h6>
                                     </div>
                                     <ul>
-                                        <li><a href="https://www.instagram.com/kickclean.gentan" target="_blank" rel="noreferrer"><i class="fab fa-instagram"></i></a></li>
-                                        <li><a href="https://wa.me/6285659176079" target="_blank" rel="noreferrer"><i class="fab fa-whatsapp"></i></a></li>
+                                        <li><Link href="https://www.instagram.com/kickclean.gentan" target="_blank" rel="noreferrer"><i class="fab fa-instagram"></i></Link></li>
+                                        <li><Link href="https://wa.me/6285659176079" target="_blank" rel="noreferrer"><i class="fab fa-whatsapp"></i></Link></li>
                                     </ul>
                                 </div>
                             </div>

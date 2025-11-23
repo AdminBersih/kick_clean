@@ -71,33 +71,33 @@ const HelmCapCleaning = () => {
                     </div>
                 </div>
 
-                <div className="service-details__bottom-text4">
-                    <h3 className="service-details__bottom-subtitle">Harga Layanan Helm &amp; Cap</h3>
+            </div>
+            <div className="service-details__bottom-text4">
+                <h3 className="service-details__bottom-subtitle">Harga Layanan Helm &amp; Cap</h3>
 
-                    <ServiceAccordion
-                        items={[
-                            {
-                                title: "Helm – Rp40.000 (3–5 hari pengerjaan)",
-                                content: (
-                                    <p>
-                                        Pembersihan bagian dalam dan luar helm, membantu mengurangi bau tidak sedap dan
-                                        rasa lengket akibat keringat. Direkomendasikan untuk helm harian maupun helm
-                                        yang jarang dicuci.
-                                    </p>
-                                ),
-                            },
-                            {
-                                title: "Cap – Rp25.000 (1 hari pengerjaan)",
-                                content: (
-                                    <p>
-                                        Cuci bersih untuk topi/cap dengan tetap menjaga bentuk. Cocok untuk topi
-                                        favorit yang sering dipakai hangout, olahraga, atau aktivitas harian.
-                                    </p>
-                                ),
-                            },
-                        ]}
-                    />
-                </div>
+                <ServiceAccordion
+                    items={[
+                        {
+                            title: "Helm – Rp40.000 (3–5 hari pengerjaan)",
+                            content: (
+                                <p>
+                                    Pembersihan bagian dalam dan luar helm, membantu mengurangi bau tidak sedap dan
+                                    rasa lengket akibat keringat. Direkomendasikan untuk helm harian maupun helm
+                                    yang jarang dicuci.
+                                </p>
+                            ),
+                        },
+                        {
+                            title: "Cap – Rp25.000 (1 hari pengerjaan)",
+                            content: (
+                                <p>
+                                    Cuci bersih untuk topi/cap dengan tetap menjaga bentuk. Cocok untuk topi
+                                    favorit yang sering dipakai hangout, olahraga, atau aktivitas harian.
+                                </p>
+                            ),
+                        },
+                    ]}
+                />
             </div>
         </ServiceDetailLayout>
     );

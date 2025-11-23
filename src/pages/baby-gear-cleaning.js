@@ -3,6 +3,7 @@ import HeaderOne from "../common/header/HeaderOne";
 import Breadcrumb from "../common/breadcrumb/Breadcrumb";
 import BabyGearCleaning from "../components/service/BabyGearCleaning";
 import FooterOne from "../common/footer/FooterOne";
+import ContactOne from "../components/contact/ContactOne";
 
 export default function BabyGearCleaningPage() {
     return (
@@ -11,6 +12,7 @@ export default function BabyGearCleaningPage() {
             <HeaderOne />
             <Breadcrumb heading="Baby Gear Cleaning" currentPage="Baby Gear Cleaning" />
             <BabyGearCleaning />
+            <ContactOne />
             <FooterOne />
         </>
     );

@@ -87,11 +87,6 @@
         margin-top: 40px;
     }
 
-    .service-details__bottom {
-        margin-top: 60px;
-    }
-
-
     /*Team Details*/
     .team-details__img {
         max-width: 600px;
@@ -327,7 +322,7 @@
 
     /*Contact Box*/
     .contact-box {
-        padding: 120px 0px 60px;
+        padding: 60px 0px;
     }
 
     .contact-box__single {
@@ -357,9 +352,6 @@
         margin-top: 40px;
     }
 
-    .service-details__bottom {
-        margin-top: 60px;
-    }
 
     .service-details__bottom-text3 .content-box {
         margin-top: 40px;
@@ -790,7 +782,7 @@
 
     /*Contact Box*/
     .contact-box {
-        padding: 120px 0px 60px;
+        padding: 60px 0px;
     }
 
     .contact-box__single {
@@ -859,10 +851,6 @@
     /*Service Details*/
     .service-details__sidebar {
         margin-top: 40px;
-    }
-
-    .service-details__bottom {
-        margin-top: 60px;
     }
 
     .service-details__bottom-text3 .content-box {

@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 
 const ContactInfo = () => {
     return (
@@ -13,7 +14,7 @@ const ContactInfo = () => {
                                     <span className="fa fa-map-marker"></span>
                                 </div>
                                 <div className="contact-box__single-text">
-                                    <h2><a href="#">Lokasi Workshop</a></h2>
+                                    <h2><Link href="#">Lokasi Workshop</Link></h2>
                                     <p>Jl. Raya Songgo Langit No.2, Gentan,<br />Baki, Sukoharjo 57556</p>
                                 </div>
                             </div>
@@ -27,9 +28,9 @@ const ContactInfo = () => {
                                     <span className="icon-email"></span>
                                 </div>
                                 <div className="contact-box__single-text">
-                                    <h2><a href="#">Kontak & Sosial</a></h2>
-                                    <p><a href="https://wa.me/6285659176079" target="_blank" rel="noreferrer">WhatsApp: 0856-5917-6079</a></p>
-                                    <p><a href="https://www.instagram.com/kickclean.gentan" target="_blank" rel="noreferrer">Instagram @kickclean.gentan</a></p>
+                                    <h2><Link href="#">Kontak & Sosial</Link></h2>
+                                    <p><Link href="https://wa.me/6285659176079" target="_blank" rel="noreferrer">WhatsApp: 0856-5917-6079</Link></p>
+                                    <p><Link href="https://www.instagram.com/kickclean.gentan" target="_blank" rel="noreferrer">Instagram @kickclean.gentan</Link></p>
                                 </div>
                             </div>
                         </div>
@@ -42,7 +43,7 @@ const ContactInfo = () => {
                                     <span className="fa fa-phone"></span>
                                 </div>
                                 <div className="contact-box__single-text">
-                                    <h2><a href="#">Jam Operasional</a></h2>
+                                    <h2><Link href="#">Jam Operasional</Link></h2>
                                     <p>Senin - Minggu</p>
                                     <p>09.00 - 21.00 WIB</p>
                                 </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import BackgroundOne from '../../../public/assets/images/backgrounds/cta-v1-bg.jpg';
+import BackgroundOne from '../../../public/assets/images/cta.png';
 
 const CtaOne = () => {
     return (
@@ -14,7 +14,7 @@ const CtaOne = () => {
                                 <div className="title">
                                     <h2>Butuh konsultasi cepat soal perawatan sepatu & tas?</h2>
                                     <div className="number">
-                                        <p>WhatsApp: <a href="https://wa.me/6285659176079" target="_blank" rel="noreferrer">0856-5917-6079</a></p>
+                                        <p>WhatsApp: <Link href="https://wa.me/6285659176079" target="_blank" rel="noreferrer">0856-5917-6079</Link></p>
                                     </div>
                                 </div>
                                 <div className="button-box">

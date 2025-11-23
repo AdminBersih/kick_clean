@@ -1,15 +1,94 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import NavMenu from './NavMenu';
 import Sidebar from './sidebar';
 import Link from 'next/link';
 import Modal from 'react-bootstrap/Modal';
+import { useRouter } from 'next/router';
+import { useAuth } from '../auth/AuthContext';
 
 const HeaderOne = () => {
   const [isActive, setIsActive] = useState(false);
   const [show, setShow] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const router = useRouter();
+  const { user, logout } = useAuth();
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
+
+  const handleLogout = async () => {
+    await logout();
+    setDropdownOpen(false);
+    router.push('/');
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    if (dropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [dropdownOpen]);
+
+  useEffect(() => {
+    setDropdownOpen(false);
+  }, [router.pathname]);
+
+  const renderPrimaryAction = () => {
+    if (user) {
+      return (
+        <div className="main-header__avatar-wrapper" ref={dropdownRef}>
+          <button
+            type="button"
+            className="main-header__avatar-trigger main-header__btn--avatar"
+            onClick={() => setDropdownOpen((prev) => !prev)}
+            aria-haspopup="true"
+            aria-expanded={dropdownOpen}
+          >
+            <span className="main-header__avatar-icon">
+              <i className="fa fa-user-circle" aria-hidden="true"></i>
+            </span>
+          </button>
+
+          <div className={`header-avatar__dropdown ${dropdownOpen ? 'is-open' : ''}`}>
+            <div className="header-avatar__meta">
+              <p className="header-avatar__welcome">Masuk sebagai</p>
+              <strong className="header-avatar__name">{user?.name || 'Pengguna'}</strong>
+              <span className="header-avatar__email">{user?.email}</span>
+            </div>
+            <Link href="/track" className="header-avatar__link">
+              <i className="fa fa-box" aria-hidden="true"></i>
+              <span>Track Order</span>
+            </Link>
+            <button
+              type="button"
+              className="header-avatar__link header-avatar__logout"
+              onClick={handleLogout}
+            >
+              <i className="fa fa-sign-out-alt" aria-hidden="true"></i>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Link href="/login" className="main-header__btn thm-btn main-header__btn--contact">
+        <span>Login</span>
+        <div className="liquid"></div>
+      </Link>
+    );
+  };
 
   return (
     <>
@@ -133,13 +212,7 @@ const HeaderOne = () => {
                   <NavMenu />
                 </div>
 
-                <Link
-                    href="/contact"
-                    className="main-header__btn thm-btn main-header__btn--contact"
-                    >
-                    <span>Hubungi Kami</span>
-                    <div className="liquid"></div>
-                </Link>
+                {renderPrimaryAction()}
 
               </div>
             </div>
