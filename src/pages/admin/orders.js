@@ -1,21 +1,33 @@
 // src/pages/admin/orders.js
 import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Calendar, ChevronDown, MoreVertical, Loader2, Eye } from 'lucide-react';
+import { Loader2, Eye } from 'lucide-react'; // Hapus icon yg tidak dipakai
 import Link from "next/link";
 
 export default function OrderList() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 1. Fetch Data Orders
+  // 1. Fetch Data Orders (DENGAN TOKEN)
   useEffect(() => {
     async function fetchOrders() {
       try {
-        const res = await fetch('/api/admin/orders');
+        // --- UPDATE DI SINI: AMBIL TOKEN ---
+        const token = localStorage.getItem('adminToken'); 
+        
+        const res = await fetch('/api/admin/orders', {
+            headers: {
+                'Authorization': `Bearer ${token}` // Kirim Token ke Backend
+            }
+        });
+        // -----------------------------------
+
         const data = await res.json();
+        
         if (res.ok) {
             setOrders(data.orders || []);
+        } else {
+            console.error("Gagal ambil orders:", data.message);
         }
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -77,9 +89,10 @@ export default function OrderList() {
                                     <td>
                                         <div className="customer-cell">
                                             <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-xs">
-                                                {order.customerName.charAt(0)}
+                                                {/* Ambil inisial nama, handling jika customerName kosong */}
+                                                {(order.customerName || 'U').charAt(0)}
                                             </div>
-                                            <span>{order.customerName}</span>
+                                            <span>{order.customerName || 'Unknown'}</span>
                                         </div>
                                     </td>
                                     <td>
@@ -87,7 +100,7 @@ export default function OrderList() {
                                         <span className={`
                                             ${order.status === 'finished' ? 'delivered' : ''} 
                                             ${order.status === 'cancelled' ? 'canceled' : ''}
-                                            ${order.status === 'pending' || order.status === 'processing' ? 'pending-badge' : ''} // Pastikan ada CSS ini
+                                            ${order.status === 'pending' || order.status === 'processing' ? 'badge-pending' : ''} 
                                         `}>
                                             {order.status}
                                         </span>

@@ -735,87 +735,85 @@
     color: #6B7280 !important; cursor: pointer; display: flex; align-items: center;
 }
 
-/* --- 5. ORDER DETAILS (Gabungan Style & Layout) --- */
+/* --- TAMBAHAN: STYLING DROPDOWN STATUS (Agar Tersembunyi & Rapi) --- */
 
-/* Badge & Buttons (Style) */
-#admin-scope .badge-pending {
-  background-color: #FFEDD5; color: #C2410C; font-size: 11px !important;
-  font-weight: 700 !important; padding: 4px 10px; border-radius: 4px; text-transform: uppercase;
-}
-#admin-scope .action-square-btn {
-  width: 40px; height: 40px; background: #F3F4F6; border: 1px solid #E5E7EB;
-  border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #4B5563;
-}
-#admin-scope .btn-save {
-  background: #F3F4F6; color: #4B5563 !important; font-weight: 600 !important;
-  padding: 0 20px; border-radius: 6px; border: 1px solid #E5E7EB;
+/* 1. Wrapper Utama (Pembungkus) */
+#admin-scope .status-dropdown-wrapper {
+  position: relative; /* Penting agar menu anaknya posisi absolute terhadap ini */
+  display: inline-block;
 }
 
-/* Layout Horizontal Header (Kiri ID, Kanan Tombol) */
-#admin-scope .order-top-header {
-  display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;
+/* 2. Tombol Pemicu "Change Status" */
+#admin-scope .status-trigger-btn {
+  background: white;
+  border: 1px solid #E5E7EB;
+  padding: 8px 16px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
-#admin-scope .order-id-group { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
-#admin-scope .order-date-group { display: flex; align-items: center; gap: 8px; color: #6B7280 !important; font-size: 14px !important; }
-#admin-scope .right-actions { display: flex; gap: 12px; }
 
-/* Layout Grid Card (Customer & Order Info Sebelahan) */
-#admin-scope .info-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 24px; /* Kunci agar horizontal */
+#admin-scope .status-trigger-btn:hover {
+  background: #F9FAFB;
+  border-color: #D1D5DB;
 }
 
-/* Style Info Box */
-#admin-scope .info-box { border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; }
-#admin-scope .info-box-inner { display: flex; gap: 16px; }
-#admin-scope .info-text { flex: 1; }
-#admin-scope .icon-square {
-  width: 45px; height: 45px; background-color: #1F2937; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;
+/* 3. Menu Dropdown (Tersembunyi by Default) */
+#admin-scope .status-menu {
+  display: none; /* Sembunyikan dulu */
+  position: absolute;
+  top: 100%; /* Muncul tepat di bawah tombol */
+  right: 0;
+  width: 180px;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 6px;
+  z-index: 50; /* Pastikan di atas elemen lain */
+  margin-top: 8px;
 }
-#admin-scope .btn-outline {
-  margin-top: 10px; background: transparent; border: 1px solid #1F2937;
-  color: #1F2937 !important; font-weight: 600 !important; font-size: 13px !important;
-  padding: 8px 0; border-radius: 6px; cursor: pointer; transition: all 0.2s;
-}
-#admin-scope .btn-outline:hover { background: #1F2937; color: white !important; }
 
-/* Payment & Note (Sebelahan 1:2) */
-#admin-scope .payment-note-grid {
-  display: grid; grid-template-columns: 1fr 2fr; gap: 24px; margin-top: 24px;
+/* 4. Logika Muncul saat Hover */
+#admin-scope .status-dropdown-wrapper:hover .status-menu {
+  display: block; /* Munculkan saat mouse di atas wrapper */
+  animation: fadeIn 0.2s ease-in-out;
 }
-#admin-scope .payment-card-row { display: flex; align-items: center; gap: 12px; }
-#admin-scope .custom-textarea {
-  width: 100%; height: 120px; border: 1px solid #E5E7EB; border-radius: 8px;
-  padding: 15px; font-size: 14px; color: #4B5563; outline: none; resize: none;
-  font-family: 'Inter', sans-serif !important;
-}
-#admin-scope .custom-textarea:focus { border-color: #0F172A; }
 
-/* Total Price Section (Rata Kanan) */
-#admin-scope .summary-section-wrapper {
-  display: flex; justify-content: flex-end; /* Kunci agar di kanan */
-  padding: 24px; padding-right: 32px;
+/* 5. Item Tombol di dalam Menu */
+#admin-scope .status-item-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 13px !important;
+  color: #4B5563;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  text-transform: capitalize;
+  font-weight: 500 !important;
+  transition: background 0.1s;
 }
-#admin-scope .summary-box { width: 300px; }
-#admin-scope .summary-row {
-  display: flex; justify-content: space-between; margin-bottom: 12px;
-  font-size: 14px !important; color: #4B5563 !important;
-}
-#admin-scope .s-value { weight: 600 !important; color: #1F2937 !important; text-align: right; }
-#admin-scope .total-row {
-  border-top: 1px solid #E5E7EB; padding-top: 16px; margin-top: 16px; margin-bottom: 0;
-}
-#admin-scope .s-label-total { font-size: 18px !important; font-weight: 700 !important; color: #1F2937 !important; }
-#admin-scope .s-value-total { font-size: 18px !important; font-weight: 700 !important; color: #1F2937 !important; text-align: right; }
 
-/* Helper Images */
-#admin-scope .product-cell-flex { display: flex; align-items: center; gap: 12px; }
-#admin-scope .prod-img-placeholder { width: 40px; height: 40px; background-color: #E5E7EB; border-radius: 4px; }
+#admin-scope .status-item-btn:hover {
+  background-color: #F3F4F6;
+  color: #1F2937;
+  font-weight: 700 !important;
+}
 
-/* Responsive HP */
-@media (max-width: 768px) {
-  #admin-scope .info-grid, #admin-scope .payment-note-grid { grid-template-columns: 1fr; }
-  #admin-scope .order-top-header { flex-direction: column; }
+/* Animasi Halus */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 
@@ -1048,3 +1046,103 @@
         grid-template-columns: 1fr; /* Jadi 1 kolom di layar kecil */
     }
 }
+
+
+/* --- NEW: STATUS BUTTONS ROW --- */
+#admin-scope .status-actions-container {
+  display: flex;
+  gap: 8px;
+  background: #F3F4F6;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+}
+
+#admin-scope .status-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1; /* Agar lebar tombol rata */
+  background: transparent;
+  color: #6B7280;
+}
+
+#admin-scope .status-btn:hover:not(:disabled) {
+  background: white;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  color: #1F2937;
+}
+
+#admin-scope .status-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Warna Aktif untuk Tiap Status */
+#admin-scope .status-btn.active {
+  background: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-color: #E5E7EB;
+}
+
+#admin-scope .status-btn.active.pending { color: #D97706; border-left: 3px solid #D97706; }
+#admin-scope .status-btn.active.processing { color: #2563EB; border-left: 3px solid #2563EB; }
+#admin-scope .status-btn.active.finished { color: #059669; border-left: 3px solid #059669; }
+#admin-scope .status-btn.active.cancelled { color: #DC2626; border-left: 3px solid #DC2626; }
+
+/* --- NEW: ROUNDED PRODUCT TABLE BOX --- */
+#admin-scope .rounded-table-box {
+  border: 1px solid #E5E7EB;
+  border-radius: 16px; /* Sudut Tumpul */
+  overflow: hidden; /* Agar isi tabel tidak keluar dari sudut tumpul */
+  background: white;
+}
+
+#admin-scope .rt-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #F3F4F6;
+  align-items: center;
+}
+
+#admin-scope .rt-row:last-child {
+  border-bottom: none;
+}
+
+#admin-scope .rt-header {
+  background: #F9FAFB;
+  font-weight: 600 !important;
+  color: #6B7280;
+  font-size: 13px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#admin-scope .rt-col-left { text-align: left; flex: 2; }
+#admin-scope .rt-col-center { text-align: center; flex: 1; }
+#admin-scope .rt-col-right { text-align: right; flex: 1; }
+
+#admin-scope .rt-item-name {
+  font-weight: 600 !important;
+  color: #1F2937;
+  font-size: 14px !important;
+}
+#admin-scope .rt-item-price {
+  color: #6B7280;
+  font-size: 13px !important;
+}
+
+/* Total Row Style */
+#admin-scope .rt-total {
+  background: #1F2937;
+  color: white;
+  padding: 20px 24px;
+}
+#admin-scope .rt-total .label { color: #9CA3AF; font-weight: 500 !important; }
+#admin-scope .rt-total .value { font-size: 18px !important; font-weight: 700 !important; color: white; }
