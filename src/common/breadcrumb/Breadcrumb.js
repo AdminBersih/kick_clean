@@ -4,15 +4,15 @@ import Link from 'next/link';
 const Breadcrumb = ({heading = "Tentang Kick Clean Gentan", currentPage = "Tentang"}) => {
     return (
         <>
-            <section class="page-header">
-                <div class="page-header__bg" style={{backgroundImage: `url(/assets/images/backgrounds/page-header-img1.png)`}}></div>
-                <div class="container">
-                    <div class="row">
-                        <div class="col-xl-12">
-                            <div class="page-header__wrapper">
-                                <div class="page-header__content">
+            <section className="page-header">
+                <div className="page-header__bg" style={{backgroundImage: `url(/assets/images/backgrounds/page-header-img1.png)`}}></div>
+                <div className="container">
+                    <div className="row">
+                        <div className="col-xl-12">
+                            <div className="page-header__wrapper">
+                                <div className="page-header__content">
                                     <h2>{heading}</h2>
-                                    <div class="page-header__menu">
+                                    <div className="page-header__menu">
                                         <ul>
                                             <li><Link href="/">Beranda</Link></li>
                                             <li>{currentPage}</li>
