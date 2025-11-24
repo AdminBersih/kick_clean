@@ -15,18 +15,32 @@ export function getTokenFromCookie(req: NextApiRequest) {
   return cookies.refreshToken ?? null;
 }
 
+function tryVerifyRefresh(req: NextApiRequest) {
+  const token = getTokenFromCookie(req);
+  if (!token) return null;
+  try {
+    return verifyRefreshToken(token);
+  } catch {
+    return null;
+  }
+}
+
 export function getUserFromRequest(req: NextApiRequest) {
   try {
-    let token = getTokenFromHeader(req);
-
-    if (!token) {
-      token = getTokenFromCookie(req);
-      if (!token) return null;
-
-      return verifyRefreshToken(token);
+    const accessToken = getTokenFromHeader(req);
+    if (!accessToken) {
+      return tryVerifyRefresh(req);
     }
 
-    return verifyAccessToken(token);
+    try {
+      return verifyAccessToken(accessToken);
+    } catch (err: any) {
+      // If access token expired, fall back to refresh token so user does not need manual reload.
+      if (err?.name === "TokenExpiredError") {
+        return tryVerifyRefresh(req);
+      }
+      throw err;
+    }
   } catch (err) {
     console.error("getUserFromRequest ERROR:", err);
     return null;

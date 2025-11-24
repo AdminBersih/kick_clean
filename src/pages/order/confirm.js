@@ -7,7 +7,7 @@ import FooterOne from "../../common/footer/FooterOne";
 import { ServiceCategoryCards, OtherTreatmentGroups, slugToCategory } from "@/data/service";
 import { useServicesData } from "@/hooks/useServicesData";
 import { useAuth } from "@/common/auth/AuthContext";
-import { addToCart, fetchCart, getOrCreateSessionId } from "@/lib/cartClient";
+import { addToCart, clearCart, fetchCart, getOrCreateSessionId } from "@/lib/cartClient";
 import {
     createOrder,
     getMidtransStatus,
@@ -19,6 +19,7 @@ import BackgroundOne from '../../../public/assets/images/pattern/services-v1-pat
 const storeLocation = { lat: -7.5803738, lng: 110.78332 };
 const gentanCenter = { lat: storeLocation.lat, lng: storeLocation.lng };
 const defaultLocation = { lat: gentanCenter.lat, lng: gentanCenter.lng };
+const locationSectionId = "location-pin-section";
 
 const formatIDR = (value) =>
     new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
@@ -86,6 +87,7 @@ export default function OrderConfirmPage() {
     const [contact, setContact] = useState({ name: "", email: "", phone: "" });
     const [location, setLocation] = useState({ lat: defaultLocation.lat, lng: defaultLocation.lng });
     const [locationStatus, setLocationStatus] = useState("");
+    const [locationTouched, setLocationTouched] = useState(false);
     const [stepError, setStepError] = useState("");
     const [mapReady, setMapReady] = useState(false);
     const mapContainerRef = useRef(null);
@@ -135,6 +137,12 @@ export default function OrderConfirmPage() {
             // ignore storage errors
         }
     }, [address]);
+
+    const isDefaultLocation = useMemo(() => {
+        const latDiff = Math.abs(location.lat - defaultLocation.lat);
+        const lngDiff = Math.abs(location.lng - defaultLocation.lng);
+        return latDiff < 0.00001 && lngDiff < 0.00001;
+    }, [location.lat, location.lng]);
 
     const categoryName = slugToCategory[serviceSlug];
     const pricingFromCategory = useMemo(
@@ -222,11 +230,13 @@ export default function OrderConfirmPage() {
             marker.on("dragend", (e) => {
                 const latlng = e.target.getLatLng();
                 setLocation({ lat: latlng.lat, lng: latlng.lng });
+                setLocationTouched(true);
                 setLocationStatus("Pin digeser manual untuk akurasi lokasi.");
             });
             map.on("click", (e) => {
                 marker.setLatLng(e.latlng);
                 setLocation({ lat: e.latlng.lat, lng: e.latlng.lng });
+                setLocationTouched(true);
                 setLocationStatus("Pin di-set melalui klik peta.");
             });
 
@@ -254,6 +264,8 @@ export default function OrderConfirmPage() {
     const service = getServiceBySlug(serviceSlug);
     const selectedPackage =
         filteredPricing.find((item) => normalizeId(item.id) === normalizeId(packageId)) || filteredPricing[0];
+    const selectedOtherGroup = OtherTreatmentGroups.find((g) => g.id === otherGroup);
+    const selectedPackagePrice = Number(selectedPackage?.price) || 0;
     const summaryItems = cartItems.length
         ? cartItems
         : selectedPackage
@@ -283,6 +295,25 @@ export default function OrderConfirmPage() {
         [location.lat, location.lng]
     );
     const isWithinFreeRange = distanceFromStoreKm !== null && distanceFromStoreKm <= 7;
+    const scrollToLocationSection = () => {
+        if (typeof window === "undefined") return;
+        const runScroll = () => {
+            const el = document.getElementById(locationSectionId);
+            if (el) {
+                el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        };
+        window.requestAnimationFrame?.(runScroll);
+        setTimeout(runScroll, 300);
+    };
+    const alertLocationRequired = () => {
+        const message = "Atur pin jemput/antar terlebih dahulu. Koordinat default tidak bisa dipakai.";
+        setStepError(message);
+        if (typeof window !== "undefined") {
+            window.alert(message);
+        }
+        scrollToLocationSection();
+    };
 
     const handleGeoLocate = async () => {
         if (typeof window === "undefined" || !navigator.geolocation) {
@@ -299,6 +330,7 @@ export default function OrderConfirmPage() {
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                setLocationTouched(true);
                 setLocationStatus("Lokasi berhasil diatur dari perangkat.");
             },
             async () => {
@@ -308,6 +340,7 @@ export default function OrderConfirmPage() {
                         const data = await res.json();
                         if (data.latitude && data.longitude) {
                             setLocation({ lat: data.latitude, lng: data.longitude });
+                            setLocationTouched(true);
                             setLocationStatus("Lokasi diperkirakan dari jaringan. Geser pin untuk presisi.");
                             return;
                         }
@@ -325,15 +358,22 @@ export default function OrderConfirmPage() {
         const parsed = parseFloat(value);
         if (Number.isNaN(parsed)) return;
         setLocation((prev) => ({ ...prev, [field]: parsed }));
+        setLocationTouched(true);
         setLocationStatus("Koordinat diperbarui secara manual.");
     };
 
     const handleFocusGentan = () => {
         setLocation({ lat: gentanCenter.lat, lng: gentanCenter.lng });
+        setLocationTouched(true);
         setLocationStatus("Pin dipusatkan ke toko Kick Clean Gentan.");
     };
 
     const validateStepOne = () => {
+        const hasValidCoords = Number.isFinite(location.lat) && Number.isFinite(location.lng);
+        if (!hasValidCoords || !locationTouched || isDefaultLocation) {
+            alertLocationRequired();
+            return false;
+        }
         if (!contact.name.trim()) {
             setStepError("Nama wajib diisi.");
             return false;
@@ -388,6 +428,21 @@ export default function OrderConfirmPage() {
             setCartLoading(false);
         }
     }, [accessToken, sessionId]);
+
+    const handleClearCart = async () => {
+        try {
+            setCartLoading(true);
+            const sid = sessionId || getOrCreateSessionId();
+            await clearCart({ sessionId: sid, token: accessToken });
+            if (sid) setSessionId(sid);
+            setCartItems([]);
+            setCartError("");
+        } catch (err) {
+            setCartError(err?.message || "Gagal menghapus layanan dari keranjang");
+        } finally {
+            setCartLoading(false);
+        }
+    };
 
     const openPaymentAndTrack = (orderCodeValue, paymentUrl) => {
         if (paymentUrl && typeof window !== "undefined") {
@@ -535,7 +590,7 @@ export default function OrderConfirmPage() {
 
     const StepOne = () => (
         <div className="service-details__bottom">
-            <div className="sidebar__category location-card" style={{ marginTop: 0 }}>
+            <div className="sidebar__category location-card" id={locationSectionId} style={{ marginTop: 0 }}>
                 <div className="location-card__header">
                     <div>
                         <p className="eyebrow">Titik lokasi</p>
@@ -544,19 +599,7 @@ export default function OrderConfirmPage() {
                             Ambil lokasi akurat dengan geolokasi browser lalu rapikan pin manual di area Gentan, Sukoharjo.
                             Jarak dihitung langsung dari titik toko Kick Clean Gentan untuk estimasi biaya.
                         </p>
-                        <div className="chip-row">
-                            <span className="chip soft">
-                                <i className="fa fa-map-marker-alt"></i> Gentan, Sukoharjo
-                            </span>
-                            <span className={`chip ${isWithinFreeRange ? "chip-success" : "chip-danger"}`}>
-                                {distanceFromStoreKm !== null
-                                    ? `${distanceFromStoreKm.toFixed(2)} km dari toko`
-                                    : "Koordinat belum dipilih"}
-                            </span>
-                            <span className="chip soft">
-                                <i className="fa fa-crosshairs"></i> {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-                            </span>
-                        </div>
+                        
                     </div>
                     <div className="location-card__stats">
                         <div className="stat-card">
@@ -589,12 +632,6 @@ export default function OrderConfirmPage() {
                                 style={{ height: 360, borderRadius: 14, overflow: "hidden" }}
                             ></div>
                         </div>
-                        <div className="floating-meta">
-                            <span className="pill">{shippingMethod === "jemput" ? "Jemput di rumah" : "Antar ke toko"}</span>
-                            <span className="pill muted-pill">
-                                <i className="fa fa-info-circle"></i> Geser pin untuk akurasi terbaik
-                            </span>
-                        </div>
                     </div>
 
                     <div className="location-controls">
@@ -618,29 +655,6 @@ export default function OrderConfirmPage() {
                             </p>
                         </div>
 
-                        <div className="coord-grid">
-                            <div className="comment-form__input-box" style={{ marginBottom: 0 }}>
-                                <label className="service-details__bottom-subtitle">Latitude</label>
-                                <input
-                                    type="number"
-                                    step="0.00001"
-                                    className="comment-form__textarea"
-                                    value={location.lat}
-                                    onChange={(e) => handleManualLatLngChange("lat", e.target.value)}
-                                />
-                            </div>
-                            <div className="comment-form__input-box" style={{ marginBottom: 0 }}>
-                                <label className="service-details__bottom-subtitle">Longitude</label>
-                                <input
-                                    type="number"
-                                    step="0.00001"
-                                    className="comment-form__textarea"
-                                    value={location.lng}
-                                    onChange={(e) => handleManualLatLngChange("lng", e.target.value)}
-                                />
-                            </div>
-                        </div>
-
                         <p className="service-details__bottom-text1" style={{ marginTop: 4, marginBottom: 4 }}>
                             Koordinat: {location.lat.toFixed(5)}, {location.lng.toFixed(5)} - geser atau klik pin di peta untuk titik
                             jemput/antar yang presisi.
@@ -661,30 +675,59 @@ export default function OrderConfirmPage() {
                 </div>
             </div>
             <div className="sidebar__category">
-                <h4 className="sidebar__title">Order Recap</h4>
+                <div className="recap-shell">
+                    <div className="recap-shell__heading">
+                        <div>
+                            <p className="recap-eyebrow">Ringkasan pilihan</p>
+                            <h4 className="sidebar__title" style={{ marginBottom: 0 }}>Order Recap</h4>
+                        </div>
+                        <span className="recap-pill recap-pill--mono">
+                            <i className="fa fa-bolt"></i> Pastikan data sudah tepat
+                        </span>
+                    </div>
+                <div className="comment-form__input-box">
+                    <div className="recap-tile recap-tile--service">
+                        <div className="recap-tile__icon">
+                            <span className={service?.icon || "fa fa-concierge-bell"}></span>
+                        </div>
+                        <div className="recap-tile__body">
+                            <div className="recap-tile__title-row">
+                                <div>
+                                    <p className="recap-eyebrow">Dipilih</p>
+                                    <h5 className="recap-title">{service?.heading || serviceSlug}</h5>
+                                </div>
+                                <span className="recap-pill recap-pill--success">Aktif</span>
+                            </div>
+                            <p className="recap-desc">
+                                {service?.description ||
+                                    "Detail layanan pilihanmu tampil lebih jelas agar kamu yakin sebelum lanjut."}
+                            </p>
+                            <div className="recap-tags">
+                                <span className="recap-tag">
+                                    <i className="fa fa-layer-group"></i>
+                                    {categoryName || "Kategori layanan"}
+                                </span>
+                                <span className="recap-tag">
+                                    <i className="fa fa-map-marker-alt"></i>
+                                    {shippingMethod === "jemput" ? "Jemput & antar" : "Drop-off ke toko"}
+                                </span>
+                                <span className="recap-tag">
+                                    <i className="fa fa-cube"></i>
+                                    {totalQuantity || quantity} item
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {serviceSlug === "cuci-tas-dompet-koper" && (
                     <div className="comment-form__input-box">
                         <label className="service-details__bottom-subtitle">Jenis Other Treatment</label>
-                        <ul className="sidebar__category-list">
-                            {OtherTreatmentGroups.map((group) => (
-                                <li key={group.id}>
-                                    <label>
-                                        <input
-                                            type="radio"
-                                            name="other-group-step1"
-                                            value={group.id}
-                                            checked={otherGroup === group.id}
-                                            onChange={(e) => setOtherGroup(e.target.value)}
-                                        />{" "}
-                                        {group.label}
-                                    </label>
-                                </li>
-                            ))}
-                        </ul>
+                        <p className="service-details__bottom-text1" style={{ marginBottom: 0 }}>
+                            {selectedOtherGroup?.label || "-"}
+                        </p>
                     </div>
                 )}
                 <div className="comment-form__input-box">
-                    <label className="service-details__bottom-subtitle">Paket layanan</label>
                     {servicesLoading && (
                         <p className="service-details__bottom-text1">Memuat paket layanan...</p>
                     )}
@@ -693,31 +736,49 @@ export default function OrderConfirmPage() {
                             {servicesError}
                         </p>
                     )}
-                    {!servicesLoading && !filteredPricing.length ? (
+                    {!servicesLoading && (!filteredPricing.length || !selectedPackage) ? (
                         <p className="service-details__bottom-text1">Paket layanan belum tersedia.</p>
                     ) : (
-                        <ul className="sidebar__category-list">
-                            {filteredPricing.map((item) => (
-                                <li key={item.id}>
-                                    <label>
-                                        <input
-                                            type="radio"
-                                            name="package-step1"
-                                            value={item.id}
-                                            checked={normalizeId(packageId) === normalizeId(item.id)}
-                                            onChange={(e) => setPackageId(normalizeId(e.target.value))}
-                                        />{" "}
-                                        <div className="package-option-body">
-                                            <span className="package-option-title">{item.label}</span>
-                                            <p className="service-details__bottom-text1" style={{ marginTop: 4 }}>
-                                                {item.note}
-                                            </p>
-                                        </div>
-                                    </label>
-                                </li>
-                            ))}
-                        </ul>
+                        <div className="recap-tile recap-tile--package">
+                            <div className="recap-tile__icon recap-tile__icon--warm">
+                                <span className="fa fa-box-open"></span>
+                            </div>
+                            <div className="recap-tile__body">
+                                <div className="recap-tile__title-row">
+                                    <div>
+                                        <p className="recap-eyebrow">Paket aktif</p>
+                                        <h5 className="recap-title">
+                                            {selectedPackage?.label || selectedPackage?.name || "-"}
+                                        </h5>
+                                    </div>
+                                    <span className="recap-pill">Sesuai pilihan</span>
+                                </div>
+                                {selectedPackage?.note && (
+                                    <p className="recap-desc" style={{ marginBottom: 10 }}>
+                                        {selectedPackage.note}
+                                    </p>
+                                )}
+                                <div className="recap-tags" style={{ marginTop: 10 }}>
+                                    <span className="recap-tag recap-tag--strong">
+                                        <i className="fa fa-coins"></i>
+                                        {formatIDR(selectedPackagePrice)}
+                                    </span>
+                                    <span className="recap-tag">
+                                        <i className="fa fa-cube"></i>
+                                        {totalQuantity || quantity} item
+                                    </span>
+                                    {serviceSlug === "cuci-tas-dompet-koper" && (
+                                        <span className="recap-tag">
+                                            <i className="fa fa-layer-group"></i>
+                                            {selectedOtherGroup?.label || "-"}
+                                        </span>
+                                    )}
+                                </div>
+                                <p className="recap-hint">Ubah paket dari halaman pemilihan layanan bila diperlukan.</p>
+                            </div>
+                        </div>
                     )}
+                </div>
                 </div>
                 <div className="comment-form__input-box">
                     <label className="service-details__bottom-subtitle">Nama</label>
@@ -862,10 +923,7 @@ export default function OrderConfirmPage() {
                                     type="button"
                                     className="thm-btn"
                                     onClick={() => {
-                                        setServiceSlug(item.slug);
-                                        const newPricing = pricingOptions[item.slug] || [];
-                                        setPackageId(normalizeId(newPricing[0]?.id || ""));
-                                        setStep(1);
+                                        router.push(`/order/${item.slug}`);
                                     }}
                                 >
                                     <span>Pilih layanan ini</span>
@@ -993,19 +1051,32 @@ export default function OrderConfirmPage() {
                             const unit = Number(item.price) || 0;
                             const lineTotal = qty * unit;
                             return (
-                                <li key={item.service_id || item.name}>
-                                    <span>
-                                        {item.name || "Layanan"}{" "}
-                                        <span className="value" style={{ fontWeight: 400 }}>
-                                            ({qty}x)
+                                <li key={item.service_id || item.name} className="cart-line">
+                                    <div className="cart-line__info">
+                                        <span>
+                                            {item.name || "Layanan"}{" "}
+                                            <span className="value" style={{ fontWeight: 400 }}>
+                                                ({qty}x)
+                                            </span>
                                         </span>
-                                    </span>
-                                    <span className="value">
-                                        {formatIDR(unit)}{" "}
-                                        <span className="muted" style={{ marginLeft: 6 }}>
-                                            {formatIDR(lineTotal)}
+                                        <span className="value">
+                                            {formatIDR(unit)}{" "}
+                                            <span className="muted" style={{ marginLeft: 6 }}>
+                                                {formatIDR(lineTotal)}
+                                            </span>
                                         </span>
-                                    </span>
+                                    </div>
+                                    {cartItems.length > 0 && (
+                                        <button
+                                            type="button"
+                                            className="remove-cart-btn"
+                                            onClick={handleClearCart}
+                                            title="Hapus layanan"
+                                            aria-label="Hapus layanan dari keranjang"
+                                        >
+                                            <i className="fa fa-trash"></i>
+                                        </button>
+                                    )}
                                 </li>
                             );
                         })}
@@ -1027,7 +1098,7 @@ export default function OrderConfirmPage() {
                             <li>
                                 <span>Other treatment</span>
                                 <span className="value">
-                                    {OtherTreatmentGroups.find((g) => g.id === otherGroup)?.label || "-"}
+                                    {selectedOtherGroup?.label || "-"}
                                 </span>
                             </li>
                         )}
@@ -1295,6 +1366,49 @@ export default function OrderConfirmPage() {
                     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
                     animation: shimmer 1.6s infinite;
                 }
+                .cart-line {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 10px;
+                }
+                .cart-line__info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+                }
+                .remove-cart-btn {
+                    width: 38px;
+                    height: 38px;
+                    border-radius: 12px;
+                    border: 1px solid #e2e8f0;
+                    background: linear-gradient(135deg, #ffffff, #f8fafc);
+                    color: #0f172a;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    box-shadow: 0 10px 30px rgba(0, 74, 148, 0.12);
+                    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+                }
+                .remove-cart-btn:hover {
+                    background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+                    border-color: #fecdd3;
+                    color: #b91c1c;
+                    transform: translateY(-1px);
+                    box-shadow: 0 14px 36px rgba(185, 28, 28, 0.2);
+                }
+                .remove-cart-btn:active {
+                    transform: translateY(0);
+                    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+                }
+                .remove-cart-btn:focus-visible {
+                    outline: 2px solid #fb7185;
+                    outline-offset: 2px;
+                }
+                .remove-cart-btn i {
+                    pointer-events: none;
+                }
                 @keyframes shimmer {
                     0% {
                         transform: translateX(-100%);
@@ -1328,5 +1442,3 @@ export default function OrderConfirmPage() {
         </>
     );
 }
-
-

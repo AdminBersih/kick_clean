@@ -1,0 +1,470 @@
+            }
+
+            if (redirectUrl) {
+                openPaymentAndTrack(orderCode, redirectUrl);
+                return;
+            }
+
+            openPaymentAndTrack(orderCode);
+        } catch (err) {
+            setPaymentError(err?.message || "Gagal membuat order, coba lagi.");
+        } finally {
+            setPayLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (step !== 3) return;
+        loadCartSnapshot();
+    }, [loadCartSnapshot, step]);
+
+    const renderSteps = () => (
+        <div className="counter-one">
+            <div className="container">
+                <div className="row">
+                    {[1, 2, 3].map((s) => (
+                        <div className="col-xl-4 col-lg-4 col-md-4" key={s}>
+                            <div className="counter-one__single" style={step === s ? { background: "#f0f6ff" } : {}}>
+                                <div className="counter-one__single-inner">
+                                    <div className="icon-box">
+                                        <span
+                                            className={
+                                                s === 1
+                                                    ? "fa fa-clipboard-list"
+                                                    : s === 2
+                                                    ? "fa fa-plus-circle"
+                                                    : "fa fa-credit-card"
+                                            }
+                                        ></span>
+                                    </div>
+                                    <div className="text-box">
+                                        <h3>Step {s}</h3>
+                                        <p>
+                                            {s === 1 && "Lokasi & data pemesan"}
+                                            {s === 2 && "Tambah layanan (opsional)"}
+                                            {s === 3 && "Ringkasan & pembayaran"}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    const StepOne = () => (
+        <div className="service-details__bottom">
+            <div className="sidebar__category location-card" style={{ marginTop: 0 }}>
+                <div className="location-card__header">
+                    <div>
+                        <p className="eyebrow">Titik lokasi</p>
+                        <h3 className="location-card__title">Atur pin jemput / antar</h3>
+                        <p className="service-details__bottom-text1" style={{ marginBottom: 10 }}>
+                            Ambil lokasi akurat dengan geolokasi browser lalu rapikan pin manual di area Gentan, Sukoharjo.
+                            Jarak dihitung langsung dari titik toko Kick Clean Gentan untuk estimasi biaya.
+                        </p>
+                        <div className="chip-row">
+                            <span className="chip soft">
+                                <i className="fa fa-map-marker-alt"></i> Gentan, Sukoharjo
+                            </span>
+                            <span className={`chip ${isWithinFreeRange ? "chip-success" : "chip-danger"}`}>
+                                {distanceFromStoreKm !== null
+                                    ? `${distanceFromStoreKm.toFixed(2)} km dari toko`
+                                    : "Koordinat belum dipilih"}
+                            </span>
+                            <span className="chip soft">
+                                <i className="fa fa-crosshairs"></i> {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="location-card__stats">
+                        <div className="stat-card">
+                            <span className="label">Status pin</span>
+                            <h4>{locationStatus || "Pin siap digerakkan"}</h4>
+                            <p className="muted">Geser atau klik di peta untuk akurasi lokasi.</p>
+                        </div>
+                        <div className="stat-card">
+                            <span className="label">Estimasi jemput</span>
+                            <h4 style={{ color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}>
+                                {isWithinFreeRange ? "Gratis 5-7 km" : "+Rp10.000"}
+                            </h4>
+                            <p className="muted">Biaya dihitung dari titik toko Kick Clean Gentan.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="location-card__body">
+                    <div className="location-map-shell">
+                        <div className="map-loading-wrap" style={{ marginBottom: 12 }}>
+                            {!mapReady && (
+                                <div className="map-skeleton">
+                                    <div className="map-skeleton__shimmer" />
+                                    <div className="map-skeleton__text">Menyiapkan peta...</div>
+                                </div>
+                            )}
+                            <div
+                                className="contact-page-google-map__one"
+                                ref={mapContainerRef}
+                                style={{ height: 360, borderRadius: 14, overflow: "hidden" }}
+                            ></div>
+                        </div>
+                        <div className="floating-meta">
+                            <span className="pill">{shippingMethod === "jemput" ? "Jemput di rumah" : "Antar ke toko"}</span>
+                            <span className="pill muted-pill">
+                                <i className="fa fa-info-circle"></i> Geser pin untuk akurasi terbaik
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="location-controls">
+                        <div className="cta-row">
+                            <div className="d-flex" style={{ gap: 10, flexWrap: "wrap" }}>
+                                <button className="thm-btn" type="button" onClick={handleGeoLocate}>
+                                    <span>Gunakan lokasi saya</span>
+                                    <i className="liquid"></i>
+                                </button>
+                                <button
+                                    className="thm-btn ghost"
+                                    type="button"
+                                    onClick={handleFocusGentan}
+                                >
+                                    <span>Fokus ke Gentan</span>
+                                    <i className="liquid"></i>
+                                </button>
+                            </div>
+                            <p className="muted" style={{ margin: 0 }}>
+                                Mulai dari perkiraan lokasi perangkat, lalu rapikan pin ke titik paling presisi.
+                            </p>
+                        </div>
+
+                        <div className="coord-grid">
+                            <div className="comment-form__input-box" style={{ marginBottom: 0 }}>
+                                <label className="service-details__bottom-subtitle">Latitude</label>
+                                <input
+                                    type="number"
+                                    step="0.00001"
+                                    className="comment-form__textarea"
+                                    value={location.lat}
+                                    onChange={(e) => handleManualLatLngChange("lat", e.target.value)}
+                                />
+                            </div>
+                            <div className="comment-form__input-box" style={{ marginBottom: 0 }}>
+                                <label className="service-details__bottom-subtitle">Longitude</label>
+                                <input
+                                    type="number"
+                                    step="0.00001"
+                                    className="comment-form__textarea"
+                                    value={location.lng}
+                                    onChange={(e) => handleManualLatLngChange("lng", e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <p className="service-details__bottom-text1" style={{ marginTop: 4, marginBottom: 4 }}>
+                            Koordinat: {location.lat.toFixed(5)}, {location.lng.toFixed(5)} - geser atau klik pin di peta untuk titik
+                            jemput/antar yang presisi.
+                        </p>
+                        <p
+                            className="service-details__bottom-text1"
+                            style={{ marginTop: 0, fontWeight: 600, color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}
+                        >
+                            Jarak ke toko: {distanceFromStoreKm !== null ? `${distanceFromStoreKm.toFixed(2)} km` : "Belum ada koordinat valid."}
+                            {distanceFromStoreKm !== null && !isWithinFreeRange && " - Biaya jemput +Rp10.000"}
+                        </p>
+                        {locationStatus && (
+                            <p className="service-details__bottom-text1" style={{ color: "var(--thm-base)", marginTop: 0 }}>
+                                {locationStatus}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            </div>
+            <div className="sidebar__category">
+                <h4 className="sidebar__title">Order Recap</h4>
+                <div className="comment-form__input-box">
+                    <label className="service-details__bottom-subtitle">Layanan dipilih</label>
+                    <div className="package-option-body">
+                        <span className="package-option-title">{service?.heading || serviceSlug}</span>
+                        {service?.description && (
+                            <p className="service-details__bottom-text1" style={{ marginTop: 4 }}>
+                                {service.description}
+                            </p>
+                        )}
+                    </div>
+                </div>
+                {serviceSlug === "cuci-tas-dompet-koper" && (
+                    <div className="comment-form__input-box">
+                        <label className="service-details__bottom-subtitle">Jenis Other Treatment</label>
+                        <p className="service-details__bottom-text1" style={{ marginBottom: 0 }}>
+                            {selectedOtherGroup?.label || "-"}
+                        </p>
+                    </div>
+                )}
+                <div className="comment-form__input-box">
+                    <label className="service-details__bottom-subtitle">Paket layanan (sesuai pilihan sebelumnya)</label>
+                    {servicesLoading && (
+                        <p className="service-details__bottom-text1">Memuat paket layanan...</p>
+                    )}
+                    {servicesError && (
+                        <p className="service-details__bottom-text1" style={{ color: "red" }}>
+                            {servicesError}
+                        </p>
+                    )}
+                    {!servicesLoading && (!filteredPricing.length || !selectedPackage) ? (
+                        <p className="service-details__bottom-text1">Paket layanan belum tersedia.</p>
+                    ) : (
+                        <div className="package-option-body">
+                            <span className="package-option-title">
+                                {selectedPackage?.label || selectedPackage?.name || "-"}
+                            </span>
+                            {selectedPackage?.note && (
+                                <p className="service-details__bottom-text1" style={{ marginTop: 4 }}>
+                                    {selectedPackage.note}
+                                </p>
+                            )}
+                            <p className="service-details__bottom-text1" style={{ marginTop: 6, marginBottom: 0 }}>
+                                Ubah paket dari halaman pemilihan layanan bila diperlukan.
+                            </p>
+                        </div>
+                    )}
+                </div>
+                <div className="comment-form__input-box">
+                    <label className="service-details__bottom-subtitle">Nama</label>
+                    <input
+                        type="text"
+                        className="comment-form__textarea"
+                        value={contact.name}
+                        onChange={(e) => setContact((prev) => ({ ...prev, name: e.target.value }))}
+                    />
+                </div>
+                <div className="comment-form__input-box">
+                    <label className="service-details__bottom-subtitle">Email</label>
+                    <input
+                        type="email"
+                        className="comment-form__textarea"
+                        value={contact.email}
+                        onChange={(e) => setContact((prev) => ({ ...prev, email: e.target.value }))}
+                    />
+                </div>
+                <div className="comment-form__input-box">
+                    <label className="service-details__bottom-subtitle">No. WhatsApp</label>
+                    <input
+                        type="text"
+                        className="comment-form__textarea"
+                        value={contact.phone}
+                        onChange={(e) => setContact((prev) => ({ ...prev, phone: e.target.value }))}
+                    />
+                </div>
+                <div className="comment-form__input-box">
+                    <label className="service-details__bottom-subtitle">Alamat lengkap</label>
+                    <textarea
+                        className="comment-form__textarea"
+                        rows={3}
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                    />
+                </div>
+                <div className="comment-form__input-box">
+                    <label className="service-details__bottom-subtitle">Metode pengiriman</label>
+                    <ul className="sidebar__category-list">
+                        <li>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="shipping-method"
+                                    value="toko"
+                                    checked={shippingMethod === "toko"}
+                                    onChange={(e) => setShippingMethod(e.target.value)}
+                                />{" "}
+                                Datang ke toko (gratis)
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input
+                                    type="radio"
+                                    name="shipping-method"
+                                    value="jemput"
+                                    checked={shippingMethod === "jemput"}
+                                    onChange={(e) => setShippingMethod(e.target.value)}
+                                />{" "}
+                                Jemput di rumah (gratis 5-7 km)
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+                <div className="comment-form__input-box">
+                    <label className="service-details__bottom-subtitle">Jumlah items : {' '}</label>
+                    <input
+                        type="number"
+                        min="1"
+                        className="comment-form__textarea"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                    />
+                </div>
+                <div className="comment-form__input-box">
+                    <label className="service-details__bottom-subtitle">Catatan</label>
+                    <textarea
+                        className="comment-form__textarea"
+                        rows={3}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                    />
+                </div>
+            </div>
+
+            {stepError && (
+                <p className="service-details__bottom-text1" style={{ color: "red" }}>
+                    {stepError}
+                </p>
+            )}
+
+            <div className="d-flex" style={{ gap: 10, justifyContent: "space-between", marginTop: 20 }}>
+                <button className="thm-btn" type="button" onClick={() => router.back()}>
+                    <span>Kembali</span>
+                    <i className="liquid"></i>
+                </button>
+                <button
+                    className="thm-btn"
+                    type="button"
+                    onClick={async () => {
+                        if (!validateStepOne()) return;
+                        try {
+                            setSubmitLoading(true);
+                            await handleAddToCart();
+                            await loadCartSnapshot();
+                            setStep(2);
+                        } catch (err) {
+                            setStepError(err?.message || "Gagal menambah ke keranjang");
+                        } finally {
+                            setSubmitLoading(false);
+                        }
+                    }}
+                    disabled={submitLoading}
+                >
+                    <span>{submitLoading ? "Memproses..." : "Lanjutkan"}</span>
+                    <i className="liquid"></i>
+                </button>
+            </div>
+        </div>
+    );
+
+    const StepTwo = () => (
+        <div className="service-details__bottom">
+            <div className="row order-addons-grid">
+                {ServiceCategoryCards.map((item) => (
+                    <div className="col-xl-4 col-lg-4 col-md-6" key={item.id}>
+                        <div className="services-one__single">
+                            <div className="services-one__single-img">
+                                <div className="services-one__single-img-inner">
+                                    <img className="parallax-img" src={item.image} alt={item.alt} />
+                                </div>
+                                <div className="icon">
+                                    <span className={item.icon}></span>
+                                </div>
+                            </div>
+                            <div className="services-one__single-content text-center">
+                                <h2>{item.heading}</h2>
+                                <p>{item.description}</p>
+                                <button
+                                    type="button"
+                                    className="thm-btn"
+                                    onClick={() => {
+                                        setServiceSlug(item.slug);
+                                        const newPricing = pricingOptions[item.slug] || [];
+                                        setPackageId(normalizeId(newPricing[0]?.id || ""));
+                                        setStep(1);
+                                    }}
+                                >
+                                    <span>Pilih layanan ini</span>
+                                    <i className="liquid"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="d-flex" style={{ gap: 10, marginTop: 20, justifyContent: "space-between" }}>
+                <button className="thm-btn" type="button" onClick={() => setStep(1)}>
+                    <span>Kembali</span>
+                    <i className="liquid"></i>
+                </button>
+                <button
+                    className="thm-btn"
+                    type="button"
+                    onClick={async () => {
+                        if (!cartItems.length) await loadCartSnapshot();
+                        setStep(3);
+                    }}
+                >
+                    <span>Lanjutkan</span>
+                    <i className="liquid"></i>
+                </button>
+            </div>
+        </div>
+    );
+
+    const StepThree = () => (
+        <div className="service-details__bottom step-three">
+            <div className="summary-banner">
+                <div className="summary-banner__left">
+                    <p className="eyebrow">Ringkasan & pembayaran</p>
+                    <h3 className="summary-title">{summaryTitle}</h3>
+                    <div className="total-row">
+                        <span>Total pembayaran</span>
+                        <div className="total-amount">{formatIDR(cartSubtotal || 0)}</div>
+                    </div>
+                    <p className="muted">
+                        Estimasi harga untuk {totalQuantity || quantity} item, gratis antar-jemput 5-7 km & metode
+                        pembayaran fleksibel.
+                    </p>
+                </div>
+                <div className="pill-wrap">
+                    {/* <span className="pill">
+                        <i className="fa fa-gem"></i>
+                        {selectedPackage?.label || "Paket belum dipilih"}
+                    </span> */}
+                    {serviceSlug === "cuci-tas-dompet-koper" && (
+                        <span className="pill">
+                            <i className="fa fa-layer-group"></i>
+                            {OtherTreatmentGroups.find((g) => g.id === otherGroup)?.label || "Bag & Wallet"}
+                        </span>
+                    )}
+                    <span className="pill">
+                        <i className="fa fa-map-marker-alt"></i>
+                        {shippingMethod === "jemput" ? "Jemput di rumah" : "Antar ke toko"}
+                    </span>
+                    <span className="pill">
+                        <i className="fa fa-cube"></i>
+                        {totalQuantity || quantity} item
+                    </span>
+                </div>
+            </div>
+
+            <div className="grid-cards">
+                <div className="recap-card">
+                    <div className="card-header">
+                        <div className="icon-bubble">
+                            <span className="fa fa-user"></span>
+                        </div>
+                        <div>
+                            <p className="label">Detail pemesan</p>
+                            <h4>{contact.name || "Nama belum diisi"}</h4>
+                        </div>
+                        <span className="badge-soft">Kontak</span>
+                    </div>
+                    <ul className="info-list">
+                        <li>
+                            <span>Email</span>
+                            <span className="value">{contact.email || "-"}</span>
+                        </li>
+                        <li>
+                            <span>WhatsApp</span>
+                            <span className="value">{contact.phone || "-"}</span>
+                        </li>
+                        <li>
+                            <span>Alamat lengkap</span>
