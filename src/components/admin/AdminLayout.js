@@ -12,7 +12,7 @@ export default function AdminLayout({ children }) {
     if (!token) {
       router.push('/admin/login');
     }
-  }, []);
+  }, [router]);
 
   // --- FUNGSI LOGOUT ---
   const handleLogout = async () => {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import SEO from "../common/seo/Seo";
 import HeaderOne from "../common/header/HeaderOne";
@@ -93,6 +93,63 @@ export default function TrackPage() {
         return sorted[0]?.orderCode || sorted[0]?.code || "";
     }, [userOrders]);
 
+    const refreshMidtransStatus = useCallback(
+        async (code = order?.orderCode, silent = false) => {
+            if (!code) return;
+            setStatusLoading(!silent);
+            setActionMessage("");
+            try {
+                const payload = await getMidtransStatus({ orderCode: code, token: accessToken });
+                setMidtransStatus(payload);
+                if (payload?.transaction_status) {
+                    setActionMessage(`Status Midtrans: ${payload.transaction_status.toUpperCase()}`);
+                }
+            } catch (err) {
+                setActionMessage(err?.message || "Tidak dapat mengambil status Midtrans.");
+            } finally {
+                setStatusLoading(false);
+            }
+        },
+        [accessToken, order?.orderCode]
+    );
+
+    const handleTrack = useCallback(
+        async (codeParam, contactParam, silent = false) => {
+            const code = (codeParam || orderCodeInput || "").trim();
+            const contact = (contactParam || contactInput || "").trim();
+            if (!code) {
+                setError("Masukkan kode order (contoh: KC-123456).");
+                return;
+            }
+            setError("");
+            setActionMessage("");
+            setPaymentLink("");
+            setLoading(!silent);
+            try {
+                const contactPayload =
+                    contact && contact.includes("@")
+                        ? { email: contact }
+                        : contact
+                        ? { phone: contact }
+                        : {};
+                const orderData = await trackOrder({
+                    orderCode: code,
+                    ...contactPayload,
+                    token: accessToken,
+                });
+                setOrder(orderData);
+                await refreshMidtransStatus(code, true);
+            } catch (err) {
+                setOrder(null);
+                setMidtransStatus(null);
+                setError(err?.message || "Gagal melacak order, coba lagi.");
+            } finally {
+                setLoading(false);
+            }
+        },
+        [accessToken, contactInput, orderCodeInput, refreshMidtransStatus]
+    );
+
     useEffect(() => {
         if (!router.isReady) return;
 
@@ -143,7 +200,17 @@ export default function TrackPage() {
         if (!prefilledOnce) {
             setPrefilledOnce(true);
         }
-    }, [prefilledOnce, query.email, query.orderCode, query.phone, router.isReady, user?.phone]);
+    }, [
+        contactInput,
+        handleTrack,
+        orderCodeInput,
+        prefilledOnce,
+        query.email,
+        query.orderCode,
+        query.phone,
+        router.isReady,
+        user?.phone,
+    ]);
 
     useEffect(() => {
         if (!router.isReady) return;
@@ -158,9 +225,7 @@ export default function TrackPage() {
             setContactInput(user.phone || user.email);
         }
         handleTrack(latestUserOrderCode, user.phone || user.email, true);
-        // We intentionally omit handleTrack from deps to avoid re-triggering after each render.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [contactInput, latestUserOrderCode, orderCodeInput, router.isReady, user]);
+    }, [contactInput, handleTrack, latestUserOrderCode, orderCodeInput, router.isReady, user]);
 
     useEffect(() => {
         if (!accessToken) return;
@@ -181,57 +246,6 @@ export default function TrackPage() {
             mounted = false;
         };
     }, [accessToken]);
-
-    const handleTrack = async (codeParam, contactParam, silent = false) => {
-        const code = (codeParam || orderCodeInput || "").trim();
-        const contact = (contactParam || contactInput || "").trim();
-        if (!code) {
-            setError("Masukkan kode order (contoh: KC-123456).");
-            return;
-        }
-        setError("");
-        setActionMessage("");
-        setPaymentLink("");
-        setLoading(!silent);
-        try {
-            const contactPayload =
-                contact && contact.includes("@")
-                    ? { email: contact }
-                    : contact
-                    ? { phone: contact }
-                    : {};
-            const orderData = await trackOrder({
-                orderCode: code,
-                ...contactPayload,
-                token: accessToken,
-            });
-            setOrder(orderData);
-            await refreshMidtransStatus(code, true);
-        } catch (err) {
-            setOrder(null);
-            setMidtransStatus(null);
-            setError(err?.message || "Gagal melacak order, coba lagi.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const refreshMidtransStatus = async (code = order?.orderCode, silent = false) => {
-        if (!code) return;
-        setStatusLoading(!silent);
-        setActionMessage("");
-        try {
-            const payload = await getMidtransStatus({ orderCode: code, token: accessToken });
-            setMidtransStatus(payload);
-            if (payload?.transaction_status) {
-                setActionMessage(`Status Midtrans: ${payload.transaction_status.toUpperCase()}`);
-            }
-        } catch (err) {
-            setActionMessage(err?.message || "Tidak dapat mengambil status Midtrans.");
-        } finally {
-            setStatusLoading(false);
-        }
-    };
 
     const handlePaymentLink = async (recreate = false) => {
         if (!order?.orderCode) {

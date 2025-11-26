@@ -242,6 +242,11 @@ export default function OrderConfirmPage() {
         const leaflet = await import("leaflet");
         if (!mapContainerRef.current) return;
         const L = leaflet.default;
+        // Avoid "Map container is already initialized" by clearing leftover id
+        if (mapContainerRef.current._leaflet_id) {
+            // eslint-disable-next-line no-underscore-dangle
+            mapContainerRef.current._leaflet_id = null;
+        }
 
         const markerIcon = L.icon({
             iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -288,7 +293,7 @@ export default function OrderConfirmPage() {
             }
         }, 200);
         return () => clearTimeout(resizeTimeout);
-    }, [location.lat, location.lng]);
+    }, [location.lat, location.lng, resetMapContainer]);
 
     useEffect(() => {
         if (step !== 1 || !showLocationStep) {
@@ -366,7 +371,7 @@ export default function OrderConfirmPage() {
                   .join(" • ")
             : service?.heading || "Pilih layanan";
     const distanceFromStoreKm = useMemo(
-        () => haversineDistanceKm(storeLocation, location),
+        () => haversineDistanceKm(storeLocation, { lat: location.lat, lng: location.lng }),
         [location.lat, location.lng]
     );
     const isWithinFreeRange = distanceFromStoreKm !== null && distanceFromStoreKm <= 7;
@@ -397,7 +402,7 @@ export default function OrderConfirmPage() {
         scrollToLocationSection();
     };
 
-    const handleGeoLocate = async () => {
+    const handleGeoLocate = useCallback(async () => {
         if (typeof window === "undefined" || !navigator.geolocation) {
             setLocationStatus("Perangkat tidak mendukung geolokasi.");
             return;
@@ -434,7 +439,7 @@ export default function OrderConfirmPage() {
             },
             { enableHighAccuracy: true, timeout: 7000 }
         );
-    };
+    }, []);
 
     const [autoLocateTriggered, setAutoLocateTriggered] = useState(false);
 

@@ -268,7 +268,7 @@ export const AuthProvider = ({ children }) => {
         }
       }
     }
-  }, [clearSessionId, persistToken]);
+  }, [clearRefreshTimer, clearSessionId, persistToken]);
 
   const value = useMemo(
     () => ({

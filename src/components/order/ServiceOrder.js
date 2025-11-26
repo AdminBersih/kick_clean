@@ -14,16 +14,23 @@ const ServiceOrder = ({ serviceSlug }) => {
     const service = useMemo(() => getServiceBySlug(serviceSlug), [serviceSlug]);
     const { services, pricingOptions, loading, error } = useServicesData();
     const categoryName = slugToCategory[serviceSlug];
-    const pricingFromCategory = (services || [])
-        .filter((svc) => svc.category === categoryName)
-        .map((svc) => ({
-            id: svc._id || svc.name,
-            name: svc.name,
-            label: `${svc.name} - ${formatIDR(svc.price)}`,
-            price: Number(svc.price) || 0,
-            note: [svc.duration, svc.description].filter(Boolean).join(" - "),
-        }));
-    const pricing = pricingFromCategory.length ? pricingFromCategory : pricingOptions[serviceSlug] || [];
+    const pricingFromCategory = useMemo(
+        () =>
+            (services || [])
+                .filter((svc) => svc.category === categoryName)
+                .map((svc) => ({
+                    id: svc._id || svc.name,
+                    name: svc.name,
+                    label: `${svc.name} - ${formatIDR(svc.price)}`,
+                    price: Number(svc.price) || 0,
+                    note: [svc.duration, svc.description].filter(Boolean).join(" - "),
+                })),
+        [categoryName, services]
+    );
+    const pricing = useMemo(() => {
+        if (pricingFromCategory.length) return pricingFromCategory;
+        return pricingOptions[serviceSlug] || [];
+    }, [pricingFromCategory, pricingOptions, serviceSlug]);
     const [otherGroup, setOtherGroup] = useState("bag-wallet");
     const [selectedPriceId, setSelectedPriceId] = useState("");
     const [address, setAddress] = useState("");

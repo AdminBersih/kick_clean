@@ -16,7 +16,7 @@ export default function AdminLogin() {
     if (token) {
         router.push('/admin');
     }
-  }, []);
+  }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
