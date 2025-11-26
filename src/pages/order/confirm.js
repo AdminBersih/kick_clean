@@ -7,7 +7,7 @@ import FooterOne from "../../common/footer/FooterOne";
 import { ServiceCategoryCards, OtherTreatmentGroups, slugToCategory } from "@/data/service";
 import { useServicesData } from "@/hooks/useServicesData";
 import { useAuth } from "@/common/auth/AuthContext";
-import { addToCart, clearCart, fetchCart, getOrCreateSessionId } from "@/lib/cartClient";
+import { addToCart, fetchCart, getOrCreateSessionId, updateCartItem } from "@/lib/cartClient";
 import {
     createOrder,
     getMidtransStatus,
@@ -89,6 +89,7 @@ export default function OrderConfirmPage() {
     const [locationStatus, setLocationStatus] = useState("");
     const [locationTouched, setLocationTouched] = useState(false);
     const [stepError, setStepError] = useState("");
+    const [shippingEditOpen, setShippingEditOpen] = useState(false);
     const [mapReady, setMapReady] = useState(false);
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
@@ -137,6 +138,25 @@ export default function OrderConfirmPage() {
             // ignore storage errors
         }
     }, [address]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        try {
+            const stored = localStorage.getItem("kickclean-location");
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                if (Number.isFinite(parsed?.lat) && Number.isFinite(parsed?.lng)) {
+                    setLocation({ lat: parsed.lat, lng: parsed.lng });
+                    setLocationTouched(true);
+                    setLocationStatus("Lokasi otomatis diambil dari riwayat pin Anda.");
+                }
+            }
+        } catch (err) {
+            // ignore storage errors
+        }
+    }, []);
+
+    const showLocationStep = shippingMethod === "jemput";
 
     const isDefaultLocation = useMemo(() => {
         const latDiff = Math.abs(location.lat - defaultLocation.lat);
@@ -197,9 +217,81 @@ export default function OrderConfirmPage() {
         document.head.appendChild(link);
     }, []);
 
+    const resetMapContainer = useCallback(() => {
+        const el = mapContainerRef.current;
+        if (!el) return;
+        try {
+            const newEl = el.cloneNode(false);
+            newEl.id = el.id;
+            newEl.className = el.className;
+            newEl.style.cssText = el.style.cssText;
+            el.replaceWith(newEl);
+            mapContainerRef.current = newEl;
+        } catch {
+            // ignore cleanup errors
+        }
+    }, []);
+
+    const setupMap = useCallback(async () => {
+        if (!mapContainerRef.current) return;
+        if (mapRef.current) {
+            setTimeout(() => mapRef.current?.invalidateSize(), 150);
+            return;
+        }
+        resetMapContainer();
+        const leaflet = await import("leaflet");
+        if (!mapContainerRef.current) return;
+        const L = leaflet.default;
+
+        const markerIcon = L.icon({
+            iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+            shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+            iconAnchor: [12, 41],
+        });
+
+        const map = L.map(mapContainerRef.current).setView([location.lat, location.lng], 16);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: "(c) OpenStreetMap",
+            maxZoom: 19,
+        }).addTo(map);
+
+        const marker = L.marker([location.lat, location.lng], { draggable: true, icon: markerIcon }).addTo(map);
+        marker.on("dragend", (e) => {
+            const latlng = e.target.getLatLng();
+            setLocation({ lat: latlng.lat, lng: latlng.lng });
+            setLocationTouched(true);
+            setLocationStatus("Pin digeser manual untuk akurasi lokasi.");
+        });
+        map.on("click", (e) => {
+            marker.setLatLng(e.latlng);
+            setLocation({ lat: e.latlng.lat, lng: e.latlng.lng });
+            setLocationTouched(true);
+            setLocationStatus("Pin di-set melalui klik peta.");
+        });
+
+        mapRef.current = map;
+        markerRef.current = marker;
+        setMapReady(true);
+        const resizeTimeout = setTimeout(() => {
+            const activeMap = mapRef.current;
+            if (
+                !activeMap ||
+                !mapContainerRef.current?.isConnected ||
+                !activeMap._container ||
+                !activeMap._container._leaflet_pos
+            )
+                return;
+            try {
+                activeMap.invalidateSize();
+            } catch {
+                // ignore resize errors when container is gone
+            }
+        }, 200);
+        return () => clearTimeout(resizeTimeout);
+    }, [location.lat, location.lng]);
+
     useEffect(() => {
-        let isMounted = true;
-        if (step !== 1) {
+        if (step !== 1 || !showLocationStep) {
             if (mapRef.current) {
                 mapRef.current.remove();
                 mapRef.current = null;
@@ -208,57 +300,40 @@ export default function OrderConfirmPage() {
             }
             return;
         }
-        if (!mapContainerRef.current || mapRef.current) return;
-        const initMap = async () => {
-            const leaflet = await import("leaflet");
-            if (!isMounted || !mapContainerRef.current) return;
-            const L = leaflet.default;
-
-            const markerIcon = L.icon({
-                iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-                shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-                iconAnchor: [12, 41],
-            });
-
-            const map = L.map(mapContainerRef.current).setView([location.lat, location.lng], 16);
-            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-                attribution: "(c) OpenStreetMap",
-                maxZoom: 19,
-            }).addTo(map);
-
-            const marker = L.marker([location.lat, location.lng], { draggable: true, icon: markerIcon }).addTo(map);
-            marker.on("dragend", (e) => {
-                const latlng = e.target.getLatLng();
-                setLocation({ lat: latlng.lat, lng: latlng.lng });
-                setLocationTouched(true);
-                setLocationStatus("Pin digeser manual untuk akurasi lokasi.");
-            });
-            map.on("click", (e) => {
-                marker.setLatLng(e.latlng);
-                setLocation({ lat: e.latlng.lat, lng: e.latlng.lng });
-                setLocationTouched(true);
-                setLocationStatus("Pin di-set melalui klik peta.");
-            });
-
-            mapRef.current = map;
-            markerRef.current = marker;
-            setMapReady(true);
+        const run = async () => {
+            await setupMap();
         };
-        initMap();
+        run();
         return () => {
-            isMounted = false;
             if (mapRef.current) {
                 mapRef.current.remove();
                 mapRef.current = null;
                 markerRef.current = null;
+                resetMapContainer();
             }
         };
-    }, [location.lat, location.lng, step]);
+    }, [resetMapContainer, setupMap, showLocationStep, step]);
 
     useEffect(() => {
         if (!mapReady || !mapRef.current || !markerRef.current) return;
         markerRef.current.setLatLng([location.lat, location.lng]);
         mapRef.current.setView([location.lat, location.lng], mapRef.current.getZoom());
+        const resizeTimeout = setTimeout(() => {
+            const activeMap = mapRef.current;
+            if (
+                !activeMap ||
+                !mapContainerRef.current?.isConnected ||
+                !activeMap._container ||
+                !activeMap._container._leaflet_pos
+            )
+                return;
+            try {
+                activeMap.invalidateSize();
+            } catch {
+                // ignore resize errors when container is gone
+            }
+        }, 50);
+        return () => clearTimeout(resizeTimeout);
     }, [location, mapReady]);
 
     const service = getServiceBySlug(serviceSlug);
@@ -295,6 +370,13 @@ export default function OrderConfirmPage() {
         [location.lat, location.lng]
     );
     const isWithinFreeRange = distanceFromStoreKm !== null && distanceFromStoreKm <= 7;
+    const shippingOptionLabel = shippingMethod === "jemput" ? "Jemput di rumah" : "Antar ke toko";
+    const shippingFee = useMemo(() => {
+        if (shippingMethod !== "jemput") return 0;
+        if (distanceFromStoreKm === null) return 0;
+        return isWithinFreeRange ? 0 : 10000;
+    }, [distanceFromStoreKm, isWithinFreeRange, shippingMethod]);
+    const orderTotal = cartSubtotal + shippingFee;
     const scrollToLocationSection = () => {
         if (typeof window === "undefined") return;
         const runScroll = () => {
@@ -354,6 +436,14 @@ export default function OrderConfirmPage() {
         );
     };
 
+    const [autoLocateTriggered, setAutoLocateTriggered] = useState(false);
+
+    useEffect(() => {
+        if (!showLocationStep || step !== 1 || autoLocateTriggered) return;
+        setAutoLocateTriggered(true);
+        handleGeoLocate();
+    }, [autoLocateTriggered, handleGeoLocate, showLocationStep, step]);
+
     const handleManualLatLngChange = (field, value) => {
         const parsed = parseFloat(value);
         if (Number.isNaN(parsed)) return;
@@ -368,11 +458,22 @@ export default function OrderConfirmPage() {
         setLocationStatus("Pin dipusatkan ke toko Kick Clean Gentan.");
     };
 
+    const handleShippingChange = (method) => {
+        setShippingMethod(method);
+        setStepError("");
+        if (method !== "jemput") {
+            setLocationStatus("");
+        }
+        setShippingEditOpen(false);
+    };
+
     const validateStepOne = () => {
-        const hasValidCoords = Number.isFinite(location.lat) && Number.isFinite(location.lng);
-        if (!hasValidCoords || !locationTouched || isDefaultLocation) {
-            alertLocationRequired();
-            return false;
+        if (showLocationStep) {
+            const hasValidCoords = Number.isFinite(location.lat) && Number.isFinite(location.lng);
+            if (!hasValidCoords || !locationTouched || isDefaultLocation) {
+                alertLocationRequired();
+                return false;
+            }
         }
         if (!contact.name.trim()) {
             setStepError("Nama wajib diisi.");
@@ -429,13 +530,22 @@ export default function OrderConfirmPage() {
         }
     }, [accessToken, sessionId]);
 
-    const handleClearCart = async () => {
+    const handleRemoveCartItem = async (serviceId) => {
+        if (!serviceId) {
+            setCartError("Data layanan tidak valid untuk dihapus.");
+            return;
+        }
         try {
             setCartLoading(true);
             const sid = sessionId || getOrCreateSessionId();
-            await clearCart({ sessionId: sid, token: accessToken });
-            if (sid) setSessionId(sid);
-            setCartItems([]);
+            const res = await updateCartItem({
+                action: "remove",
+                serviceId,
+                sessionId: sid,
+                token: accessToken,
+            });
+            if (res.sessionId) setSessionId(res.sessionId);
+            setCartItems(res.cart?.items || []);
             setCartError("");
         } catch (err) {
             setCartError(err?.message || "Gagal menghapus layanan dari keranjang");
@@ -444,15 +554,36 @@ export default function OrderConfirmPage() {
         }
     };
 
+    const persistLastOrderShortcut = (orderCodeValue) => {
+        if (typeof window === "undefined" || !orderCodeValue) return;
+        try {
+            localStorage.setItem(
+                "kickclean-last-order",
+                JSON.stringify({
+                    orderCode: orderCodeValue,
+                    phone: contact.phone || "",
+                    email: contact.email || "",
+                    savedAt: Date.now(),
+                })
+            );
+        } catch (err) {
+            // ignore storage errors
+        }
+    };
+
     const openPaymentAndTrack = (orderCodeValue, paymentUrl) => {
         if (paymentUrl && typeof window !== "undefined") {
             window.open(paymentUrl, "_blank", "noopener,noreferrer");
         }
-        if (orderCodeValue) {
-            router.push(`/track?orderCode=${orderCodeValue}`);
-        } else {
-            router.push("/track");
+        const params = new URLSearchParams();
+        if (orderCodeValue) params.set("orderCode", orderCodeValue);
+        if (contact.phone) {
+            params.set("phone", contact.phone);
+        } else if (contact.email) {
+            params.set("email", contact.email);
         }
+        const qs = params.toString();
+        router.push(qs ? `/track?${qs}` : "/track");
     };
 
     const handlePayNow = async () => {
@@ -491,19 +622,20 @@ export default function OrderConfirmPage() {
             const orderCode =
                 data?.orderCode || data?.order?.orderCode || data?.order_code || data?.order?.code || data?.code;
             let redirectUrl = pickPaymentUrl(data);
+            persistLastOrderShortcut(orderCode);
 
-                if (orderCode) {
-                    try {
-                        const statusPayload = await getMidtransStatus({ orderCode, token: accessToken });
-                        const trxStatus =
-                            statusPayload?.transaction_status || statusPayload?.transactionStatus || statusPayload?.status;
-                        if (trxStatus && successStatuses.includes(trxStatus)) {
-                            openPaymentAndTrack(orderCode);
-                            return;
-                        }
-                    } catch (statusErr) {
-                        if (process.env.NODE_ENV !== "production") {
-                            console.warn("Midtrans status error", statusErr);
+            if (orderCode) {
+                try {
+                    const statusPayload = await getMidtransStatus({ orderCode, token: accessToken });
+                    const trxStatus =
+                        statusPayload?.transaction_status || statusPayload?.transactionStatus || statusPayload?.status;
+                    if (trxStatus && successStatuses.includes(trxStatus)) {
+                        openPaymentAndTrack(orderCode);
+                        return;
+                    }
+                } catch (statusErr) {
+                    if (process.env.NODE_ENV !== "production") {
+                        console.warn("Midtrans status error", statusErr);
                     }
                 }
 
@@ -574,7 +706,7 @@ export default function OrderConfirmPage() {
                                     <div className="text-box">
                                         <h3>Step {s}</h3>
                                         <p>
-                                            {s === 1 && "Lokasi & data pemesan"}
+                                            {s === 1 && (showLocationStep ? "Lokasi & data pemesan" : "Order recap")}
                                             {s === 2 && "Tambah layanan (opsional)"}
                                             {s === 3 && "Ringkasan & pembayaran"}
                                         </p>
@@ -590,7 +722,8 @@ export default function OrderConfirmPage() {
 
     const StepOne = () => (
         <div className="service-details__bottom">
-            <div className="sidebar__category location-card" id={locationSectionId} style={{ marginTop: 0 }}>
+            {showLocationStep && (
+                <div className="sidebar__category location-card" id={locationSectionId} style={{ marginTop: 0 }}>
                 <div className="location-card__header">
                     <div>
                         <p className="eyebrow">Titik lokasi</p>
@@ -674,6 +807,7 @@ export default function OrderConfirmPage() {
                     </div>
                 </div>
             </div>
+            )}
             <div className="sidebar__category">
                 <div className="recap-shell">
                     <div className="recap-shell__heading">
@@ -719,14 +853,6 @@ export default function OrderConfirmPage() {
                         </div>
                     </div>
                 </div>
-                {serviceSlug === "cuci-tas-dompet-koper" && (
-                    <div className="comment-form__input-box">
-                        <label className="service-details__bottom-subtitle">Jenis Other Treatment</label>
-                        <p className="service-details__bottom-text1" style={{ marginBottom: 0 }}>
-                            {selectedOtherGroup?.label || "-"}
-                        </p>
-                    </div>
-                )}
                 <div className="comment-form__input-box">
                     {servicesLoading && (
                         <p className="service-details__bottom-text1">Memuat paket layanan...</p>
@@ -818,32 +944,53 @@ export default function OrderConfirmPage() {
                 </div>
                 <div className="comment-form__input-box">
                     <label className="service-details__bottom-subtitle">Metode pengiriman</label>
-                    <ul className="sidebar__category-list">
-                        <li>
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="shipping-method"
-                                    value="toko"
-                                    checked={shippingMethod === "toko"}
-                                    onChange={(e) => setShippingMethod(e.target.value)}
-                                />{" "}
-                                Datang ke toko (gratis)
-                            </label>
-                        </li>
-                        <li>
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="shipping-method"
-                                    value="jemput"
-                                    checked={shippingMethod === "jemput"}
-                                    onChange={(e) => setShippingMethod(e.target.value)}
-                                />{" "}
-                                Jemput di rumah (gratis 5-7 km)
-                            </label>
-                        </li>
-                    </ul>
+                    <div className="recap-tile recap-tile--package" style={{ alignItems: "flex-start" }}>
+                        <div className="recap-tile__icon recap-tile__icon--warm">
+                            <span className="fa fa-truck"></span>
+                        </div>
+                        <div className="recap-tile__body">
+                            <div className="recap-tile__title-row">
+                                <div>
+                                    <p className="recap-eyebrow">Atur pengiriman di halaman ini</p>
+                                    <h5 className="recap-title" style={{ marginBottom: 6 }}>{shippingOptionLabel}</h5>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="shipping-edit-btn"
+                                    onClick={() => setShippingEditOpen((prev) => !prev)}
+                                >
+                                    <i className="fa fa-edit" aria-hidden="true"></i>
+                                    <span>{shippingEditOpen ? "Tutup edit" : "Edit pengiriman"}</span>
+                                </button>
+                            </div>
+                            <p className="recap-desc" style={{ marginBottom: 8 }}>
+                                {shippingMethod === "jemput"
+                                    ? "Gratis 5-7 km, di atas itu biaya jemput +Rp10.000."
+                                    : "Drop-off langsung ke toko tanpa ongkir."}
+                            </p>
+                            <div className="recap-tags" style={{ marginTop: 10 }}>
+                                <span className="recap-tag recap-tag--strong">
+                                    <i className="fa fa-coins"></i>
+                                    {shippingFee === 0 ? "Gratis" : formatIDR(shippingFee)}
+                                </span>
+                            </div>
+                            <div className="recap-tags" style={{ marginTop: 8, gap: 8, display: "flex", flexWrap: "wrap" }}>
+                                {shippingEditOpen && (
+                                    <div className="shipping-select-wrap">
+                                        <label className="shipping-select-label">Pilih metode</label>
+                                        <select
+                                            className="shipping-select"
+                                            value={shippingMethod}
+                                            onChange={(e) => handleShippingChange(e.target.value)}
+                                        >
+                                            <option value="toko">Datang ke toko (gratis)</option>
+                                            <option value="jemput">Jemput di rumah (gratis 5-7 km)</option>
+                                        </select>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div className="comment-form__input-box">
                     <label className="service-details__bottom-subtitle">Jumlah items : {' '}</label>
@@ -884,6 +1031,12 @@ export default function OrderConfirmPage() {
                         if (!validateStepOne()) return;
                         try {
                             setSubmitLoading(true);
+                            if (typeof window !== "undefined" && showLocationStep && locationTouched) {
+                                localStorage.setItem(
+                                    "kickclean-location",
+                                    JSON.stringify({ lat: location.lat, lng: location.lng })
+                                );
+                            }
                             await handleAddToCart();
                             await loadCartSnapshot();
                             setStep(2);
@@ -963,11 +1116,14 @@ export default function OrderConfirmPage() {
                     <h3 className="summary-title">{summaryTitle}</h3>
                     <div className="total-row">
                         <span>Total pembayaran</span>
-                        <div className="total-amount">{formatIDR(cartSubtotal || 0)}</div>
+                        <div className="total-amount">{formatIDR(orderTotal || 0)}</div>
                     </div>
                     <p className="muted">
-                        Estimasi harga untuk {totalQuantity || quantity} item, gratis antar-jemput 5-7 km & metode
-                        pembayaran fleksibel.
+                        Estimasi untuk {totalQuantity || quantity} item,{" "}
+                        {shippingMethod === "jemput"
+                            ? "gratis jemput 5-7 km, di atas itu ada biaya jemput +Rp10.000."
+                            : "drop-off langsung ke toko tanpa ongkir."}{" "}
+                        Metode pembayaran fleksibel.
                     </p>
                 </div>
                 <div className="pill-wrap">
@@ -1070,7 +1226,12 @@ export default function OrderConfirmPage() {
                                         <button
                                             type="button"
                                             className="remove-cart-btn"
-                                            onClick={handleClearCart}
+                                            onClick={() =>
+                                                handleRemoveCartItem(
+                                                    item.service_id || item.id || item._id || item.serviceId
+                                                )
+                                            }
+                                            disabled={cartLoading}
                                             title="Hapus layanan"
                                             aria-label="Hapus layanan dari keranjang"
                                         >
@@ -1113,22 +1274,39 @@ export default function OrderConfirmPage() {
                         <li>
                             <span>Pengiriman</span>
                             <span className="value">
-                                {shippingMethod === "jemput" ? "Jemput di rumah (gratis 5-7 km)" : "Antar ke toko"}
+                                {shippingOptionLabel}
+                                <span className="muted" style={{ marginLeft: 6 }}>
+                                    {shippingMethod === "jemput"
+                                        ? shippingFee === 0
+                                            ? "(Gratis <=7 km)"
+                                            : `(Ongkir ${formatIDR(shippingFee)})`
+                                        : "(Tanpa ongkir)"}
+                                </span>
                             </span>
                         </li>
-                        <li>
-                            <span>Jarak dari toko</span>
-                            <span className="value" style={{ color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}>
-                                {distanceFromStoreKm !== null ? `${distanceFromStoreKm.toFixed(2)} km` : "Belum dihitung"}
-                                {distanceFromStoreKm !== null && !isWithinFreeRange && " (biaya jemput +Rp10.000)"}
-                            </span>
-                        </li>
-                        <li>
-                            <span>Lokasi koordinat</span>
-                            <span className="value">
-                                {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
-                            </span>
-                        </li>
+                        {shippingMethod === "jemput" && (
+                            <>
+                                <li>
+                                    <span>Ongkir jemput</span>
+                                    <span className="value" style={{ color: shippingFee ? "#d0352f" : "#1e9e52" }}>
+                                        {shippingFee === 0 ? "Gratis (<=7 km)" : formatIDR(shippingFee)}
+                                    </span>
+                                </li>
+                                <li>
+                                    <span>Jarak dari toko</span>
+                                    <span className="value" style={{ color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}>
+                                        {distanceFromStoreKm !== null ? `${distanceFromStoreKm.toFixed(2)} km` : "Belum dihitung"}
+                                        {distanceFromStoreKm !== null && !isWithinFreeRange && " (biaya jemput +Rp10.000)"}
+                                    </span>
+                                </li>
+                                <li>
+                                    <span>Lokasi koordinat</span>
+                                    <span className="value">
+                                        {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                                    </span>
+                                </li>
+                            </>
+                        )}
                     </ul>
                 </div>
             </div>

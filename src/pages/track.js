@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import SEO from "../common/seo/Seo";
 import HeaderOne from "../common/header/HeaderOne";
@@ -83,13 +83,84 @@ export default function TrackPage() {
     const [actionMessage, setActionMessage] = useState("");
     const [userOrders, setUserOrders] = useState([]);
     const [listLoading, setListLoading] = useState(false);
+    const lastAutoCodeRef = useRef("");
+    const [prefilledOnce, setPrefilledOnce] = useState(false);
+    const latestUserOrderCode = useMemo(() => {
+        if (!userOrders.length) return "";
+        const sorted = [...userOrders].sort(
+            (a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0)
+        );
+        return sorted[0]?.orderCode || sorted[0]?.code || "";
+    }, [userOrders]);
 
     useEffect(() => {
         if (!router.isReady) return;
-        if (query.orderCode) {
-            handleTrack(query.orderCode, contactInput, true);
+
+        const hasNewQueryCode = query.orderCode && query.orderCode !== lastAutoCodeRef.current;
+        if (prefilledOnce && !hasNewQueryCode) return;
+
+        let nextCode = query.orderCode || "";
+        let nextContact = query.phone || query.email || "";
+        const allowStoredOrder = !prefilledOnce || !nextCode;
+        const allowStoredContact = !prefilledOnce || !nextContact;
+
+        try {
+            if (!nextContact && user?.phone) {
+                nextContact = user.phone;
+            }
+            if (typeof window !== "undefined") {
+                const storedContact = allowStoredContact ? localStorage.getItem("kickclean-contact") : null;
+                if (allowStoredContact && storedContact) {
+                    const parsedContact = JSON.parse(storedContact);
+                    nextContact = parsedContact.phone || parsedContact.email || nextContact;
+                }
+                const lastOrderRaw = allowStoredOrder ? localStorage.getItem("kickclean-last-order") : null;
+                if (allowStoredOrder && lastOrderRaw) {
+                    const parsedLastOrder = JSON.parse(lastOrderRaw);
+                    if (!nextCode && parsedLastOrder.orderCode) {
+                        nextCode = parsedLastOrder.orderCode;
+                    }
+                    if (!nextContact && (parsedLastOrder.phone || parsedLastOrder.email)) {
+                        nextContact = parsedLastOrder.phone || parsedLastOrder.email;
+                    }
+                }
+            }
+        } catch (err) {
+            // ignore prefill errors
         }
-    }, [contactInput, query.orderCode, router.isReady]);
+
+        if (nextCode && nextCode !== orderCodeInput) {
+            setOrderCodeInput(nextCode);
+        }
+        if (nextContact && nextContact !== contactInput) {
+            setContactInput(nextContact);
+        }
+
+        if (nextCode && lastAutoCodeRef.current !== nextCode) {
+            lastAutoCodeRef.current = nextCode;
+            handleTrack(nextCode, nextContact, true);
+        }
+        if (!prefilledOnce) {
+            setPrefilledOnce(true);
+        }
+    }, [prefilledOnce, query.email, query.orderCode, query.phone, router.isReady, user?.phone]);
+
+    useEffect(() => {
+        if (!router.isReady) return;
+        if (!user) return;
+        if (!latestUserOrderCode) return;
+        if (lastAutoCodeRef.current === latestUserOrderCode) return;
+        if (orderCodeInput?.trim()) return;
+
+        lastAutoCodeRef.current = latestUserOrderCode;
+        setOrderCodeInput(latestUserOrderCode);
+        if (!contactInput && (user.phone || user.email)) {
+            setContactInput(user.phone || user.email);
+        }
+        handleTrack(latestUserOrderCode, user.phone || user.email, true);
+        // We intentionally omit handleTrack from deps to avoid re-triggering after each render.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [contactInput, latestUserOrderCode, orderCodeInput, router.isReady, user]);
 
     useEffect(() => {
         if (!accessToken) return;
@@ -197,7 +268,7 @@ export default function TrackPage() {
         setActionMessage("");
         try {
             await cancelMidtransPayment({ orderCode: order.orderCode, token: accessToken });
-            setActionMessage("Pembayaran dibatalkan. Jika masih butuh, buat link baru.");
+            setActionMessage("Pesanan dibatalkan via Midtrans. Jika masih butuh, buat link baru.");
             await refreshMidtransStatus(order.orderCode, true);
         } catch (err) {
             setActionMessage(err?.message || "Gagal membatalkan pembayaran.");
@@ -246,7 +317,7 @@ export default function TrackPage() {
             <section className="service-details pd-120-0-90">
                 <div className="services-one__pattern" style={{backgroundImage: `url(${BackgroundOne.src})`}}></div>
                 <div className="container">
-                    <div className="service-details__bottom" style={{ marginBottom: 30 }}>
+                    {/* <div className="service-details__bottom" style={{ marginBottom: 30 }}>
                         <div className="order-track-hero">
                             <div>
                                 <p className="label">Lacak order</p>
@@ -304,6 +375,50 @@ export default function TrackPage() {
                                     )}
                                 </div>
                             </div>
+                        </div>
+                    </div> */}
+
+                    <div className="service-details__bottom" style={{ marginTop: 30, background: "transparent" }}>
+                        <div className="card-header" style={{ padding: '0px 10px', marginBottom: 16 }}>
+                            <div className="icon-bubble">
+                                <span className="fa fa-history"></span>
+                            </div>
+                            <div>
+                                <p className="label">Riwayat order</p>
+                                <h4>Order terbaru Anda</h4>
+                            </div>
+                            {listLoading && <span className="badge-soft">Memuat...</span>}
+                        </div>
+                        {user && userOrders.length === 0 && !listLoading && (
+                            <p className="service-details__bottom-text1">Belum ada order di akun ini.</p>
+                        )}
+                        {!user && (
+                            <p className="service-details__bottom-text1">
+                                Login untuk melihat order milik akun Anda. Tamu bisa melacak dengan kode & kontak.
+                            </p>
+                        )}
+                        <div className="row">
+                            {userOrders.slice(0, 3).map((ord) => (
+                                <div className="col-xl-4 col-lg-4 col-md-6" key={ord._id || ord.orderCode}>
+                                    <div className="services-one__single" style={{ minHeight: 220 }}>
+                                        <div className="services-one__single-content text-center">
+                                            <h2>{ord.orderCode}</h2>
+                                            <p style={{ minHeight: 60 }}>{statusCopy[ord.status] || ord.status}</p>
+                                            <p className="service-details__bottom-text1">
+                                                Dibuat: {formatDate(ord.createdAt)}
+                                            </p>
+                                            <button
+                                                type="button"
+                                                className="thm-btn"
+                                                onClick={() => handleTrack(ord.orderCode, ord.phone)}
+                                            >
+                                                <span>Lacak order ini</span>
+                                                <i className="liquid"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
@@ -492,7 +607,7 @@ export default function TrackPage() {
                                         disabled={cancelLoading || !order}
                                         style={{ background: "#f87171" }}
                                     >
-                                        <span>{cancelLoading ? "Membatalkan..." : "Batalkan pembayaran"}</span>
+                                        <span>{cancelLoading ? "Membatalkan..." : "Batalkan pesanan"}</span>
                                         <i className="liquid"></i>
                                     </button>
                                 </div>
@@ -504,49 +619,7 @@ export default function TrackPage() {
                         </div>
                     </div>
 
-                    <div className="service-details__bottom" style={{ marginTop: 30 }}>
-                        <div className="card-header" style={{ padding: 0, marginBottom: 16 }}>
-                            <div className="icon-bubble">
-                                <span className="fa fa-history"></span>
-                            </div>
-                            <div>
-                                <p className="label">Riwayat order</p>
-                                <h4>Order terbaru Anda</h4>
-                            </div>
-                            {listLoading && <span className="badge-soft">Memuat...</span>}
-                        </div>
-                        {user && userOrders.length === 0 && !listLoading && (
-                            <p className="service-details__bottom-text1">Belum ada order di akun ini.</p>
-                        )}
-                        {!user && (
-                            <p className="service-details__bottom-text1">
-                                Login untuk melihat order milik akun Anda. Tamu bisa melacak dengan kode & kontak.
-                            </p>
-                        )}
-                        <div className="row">
-                            {userOrders.slice(0, 3).map((ord) => (
-                                <div className="col-xl-4 col-lg-4 col-md-6" key={ord._id || ord.orderCode}>
-                                    <div className="services-one__single" style={{ minHeight: 220 }}>
-                                        <div className="services-one__single-content text-center">
-                                            <h2>{ord.orderCode}</h2>
-                                            <p style={{ minHeight: 60 }}>{statusCopy[ord.status] || ord.status}</p>
-                                            <p className="service-details__bottom-text1">
-                                                Dibuat: {formatDate(ord.createdAt)}
-                                            </p>
-                                            <button
-                                                type="button"
-                                                className="thm-btn"
-                                                onClick={() => handleTrack(ord.orderCode, ord.phone)}
-                                            >
-                                                <span>Lacak order ini</span>
-                                                <i className="liquid"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    
                 </div>
             </section>
             <FooterOne />

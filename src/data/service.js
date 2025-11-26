@@ -168,8 +168,13 @@ export const slugToNames = {
         "Koper - Small",
         "Koper - Medium",
         "Koper - Large",
+        "Baby Gear - Stroller",
+        "Baby Gear - Bouncer",
+        "Baby Gear - Car Seat",
+        "Helm",
+        "Cap",
     ],
-    "baby-gear-cleaning": ["Stroller", "Bouncer", "Car Seat"],
+    "baby-gear-cleaning": ["Stroller", "Bouncer", "Car Seat", "Baby Gear - Stroller", "Baby Gear - Bouncer", "Baby Gear - Car Seat"],
     "helm-cap-cleaning": ["Helm", "Cap"],
 };
 
@@ -225,6 +230,23 @@ export const OtherTreatmentGroups = [
         id: "koper",
         label: "Koper",
         names: ["Koper - Small", "Koper - Medium", "Koper - Large"],
+    },
+    {
+        id: "baby-gear",
+        label: "Baby Gear",
+        names: [
+            "Baby Gear - Stroller",
+            "Baby Gear - Bouncer",
+            "Baby Gear - Car Seat",
+            "Stroller",
+            "Bouncer",
+            "Car Seat",
+        ],
+    },
+    {
+        id: "helm-cap",
+        label: "Helm & Cap",
+        names: ["Helm", "Cap"],
     },
 ];
 

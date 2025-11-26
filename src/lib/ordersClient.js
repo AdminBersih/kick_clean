@@ -126,7 +126,7 @@ export async function cancelMidtransPayment({ orderCode, token }) {
             ...authHeader(token),
         },
         credentials: "include",
-        body: JSON.stringify({ orderCode }),
+        body: JSON.stringify({ orderCode: orderCode }),
     });
 
     const data = await res.json().catch(() => ({}));

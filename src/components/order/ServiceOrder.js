@@ -27,10 +27,11 @@ const ServiceOrder = ({ serviceSlug }) => {
     const [otherGroup, setOtherGroup] = useState("bag-wallet");
     const [selectedPriceId, setSelectedPriceId] = useState("");
     const [address, setAddress] = useState("");
-    const [shippingMethod, setShippingMethod] = useState("toko");
+    const [shippingMethod, setShippingMethod] = useState("");
     const [notes, setNotes] = useState("");
     const [quantity, setQuantity] = useState(1);
     const [contactLoaded, setContactLoaded] = useState(false);
+    const [formError, setFormError] = useState("");
 
     const filteredPricing = useMemo(() => {
         if (serviceSlug !== "cuci-tas-dompet-koper") return pricing;
@@ -44,7 +45,9 @@ const ServiceOrder = ({ serviceSlug }) => {
     const pickupNote =
         shippingMethod === "jemput"
             ? "Gratis jemput antar untuk jarak 5-7 km. Di atas itu akan dikonfirmasi admin."
-            : "Datang langsung ke toko tanpa biaya tambahan.";
+            : shippingMethod === "toko"
+            ? "Datang langsung ke toko tanpa biaya tambahan."
+            : "Pilih metode pengiriman/penjemputan terlebih dahulu.";
 
     useEffect(() => {
         if (typeof window === "undefined") return;
@@ -126,6 +129,39 @@ const ServiceOrder = ({ serviceSlug }) => {
             </div>
         );
     }
+
+    const scrollToShippingSection = () => {
+        if (typeof window === "undefined") return;
+        const el = document.getElementById("shipping-method-section");
+        if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    };
+
+    const handleContinue = () => {
+        if (!shippingMethod) {
+            const message = "Pilih metode pengiriman/penjemputan terlebih dahulu sebelum lanjut.";
+            setFormError(message);
+            if (typeof window !== "undefined") {
+                window.alert(message);
+            }
+            scrollToShippingSection();
+            return;
+        }
+        setFormError("");
+        router.push({
+            pathname: "/order/confirm",
+            query: {
+                service: serviceSlug,
+                packageId: selectedPriceId,
+                shipping: shippingMethod,
+                address,
+                notes,
+                qty: quantity,
+                otherGroup: serviceSlug === "cuci-tas-dompet-koper" ? otherGroup : undefined,
+            },
+        });
+    };
 
     return (
         <section className="service-details pd-120-0-90">
@@ -215,7 +251,7 @@ const ServiceOrder = ({ serviceSlug }) => {
                                     />
                                 </div>
 
-                                <div className="comment-form__input-box">
+                                <div className="comment-form__input-box" id="shipping-method-section">
                                     <p className="service-details__bottom-subtitle">Metode pengiriman</p>
                                     <ul className="sidebar__category-list">
                                         <li>
@@ -225,7 +261,10 @@ const ServiceOrder = ({ serviceSlug }) => {
                                                     name="shipping"
                                                     value="toko"
                                                     checked={shippingMethod === "toko"}
-                                                    onChange={(e) => setShippingMethod(e.target.value)}
+                                                    onChange={(e) => {
+                                                        setShippingMethod(e.target.value);
+                                                        setFormError("");
+                                                    }}
                                                 />{" "}
                                                 Datang ke toko (gratis)
                                             </label>
@@ -237,13 +276,21 @@ const ServiceOrder = ({ serviceSlug }) => {
                                                     name="shipping"
                                                     value="jemput"
                                                     checked={shippingMethod === "jemput"}
-                                                    onChange={(e) => setShippingMethod(e.target.value)}
+                                                    onChange={(e) => {
+                                                        setShippingMethod(e.target.value);
+                                                        setFormError("");
+                                                    }}
                                                 />{" "}
                                                 Jemput di rumah
                                             </label>
                                         </li>
                                     </ul>
                                     <p className="service-details__bottom-text1">{pickupNote}</p>
+                                    {formError && (
+                                        <p className="service-details__bottom-text1" style={{ color: "#c1121f", fontWeight: 600 }}>
+                                            {formError}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="comment-form__input-box">
@@ -291,7 +338,11 @@ const ServiceOrder = ({ serviceSlug }) => {
                                     <div className="service-details__sidebar-1">
                                         <p className="service-details__bottom-subtitle">Metode Pengiriman : </p>
                                         <p className="service-details__bottom-text1-p">
-                                            {shippingMethod === "jemput" ? "Jemput di rumah" : "Datang ke toko"}
+                                            {shippingMethod === "jemput"
+                                                ? "Jemput di rumah"
+                                                : shippingMethod === "toko"
+                                                ? "Datang ke toko"
+                                                : "Pilih metode pengiriman"}
                                         </p>
                                     </div>
                                     <span className="service-details__sidebar-title">
@@ -309,20 +360,7 @@ const ServiceOrder = ({ serviceSlug }) => {
                             <button
                                 type="button"
                                 className="thm-btn"
-                                onClick={() =>
-                                    router.push({
-                                        pathname: "/order/confirm",
-                                        query: {
-                                            service: serviceSlug,
-                                            packageId: selectedPriceId,
-                                            shipping: shippingMethod,
-                                            address,
-                                            notes,
-                                            qty: quantity,
-                                            otherGroup: serviceSlug === "cuci-tas-dompet-koper" ? otherGroup : undefined,
-                                        },
-                                    })
-                                }
+                                onClick={handleContinue}
                             >
                                 <span>Lanjutkan Pembayaran</span>
                                 <i className="liquid"></i>

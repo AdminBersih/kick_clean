@@ -68,6 +68,36 @@ export async function fetchCart({ sessionId, token }) {
     return { cart: data.cart || { items: [] }, sessionId: sid };
 }
 
+export async function updateCartItem({ serviceId, action = "set", quantity, sessionId, token }) {
+    if (!serviceId || !isObjectId(serviceId)) {
+        throw new Error("serviceId tidak valid, pastikan memilih layanan dari server.");
+    }
+    const normalizedAction = action === "remove" ? "remove" : "set";
+    const sid = token ? undefined : sessionId || getOrCreateSessionId();
+    const payload = {
+        sessionId: token ? undefined : sid,
+        action: normalizedAction,
+        service_id: serviceId,
+    };
+    if (normalizedAction === "set") {
+        payload.quantity = Math.max(0, Number(quantity) || 0);
+    }
+    const res = await fetch(`${API_BASE}/api/cart/update`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeader(token),
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+        throw new Error(data.message || "Gagal memperbarui keranjang");
+    }
+    return { cart: data.cart, sessionId: sid };
+}
+
 export async function clearCart({ sessionId, token }) {
     const sid = token ? undefined : sessionId || getOrCreateSessionId();
     const res = await fetch(`${API_BASE}/api/cart/clear`, {
