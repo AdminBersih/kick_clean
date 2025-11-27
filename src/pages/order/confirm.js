@@ -186,18 +186,11 @@ export default function OrderConfirmPage() {
     const filteredPricing =
         serviceSlug === "cuci-tas-dompet-koper"
             ? pricing.filter((item) =>
-                  (OtherTreatmentGroups.find((g) => g.id === otherGroup) || OtherTreatmentGroups[0])?.names.includes(item.name)
-              )
+                (OtherTreatmentGroups.find((g) => g.id === otherGroup) || OtherTreatmentGroups[0])?.names.includes(item.name)
+            )
             : pricing;
 
-    useEffect(() => {
-        if (
-            filteredPricing.length &&
-            !filteredPricing.find((item) => normalizeId(item.id) === normalizeId(packageId))
-        ) {
-            setPackageId(normalizeId(filteredPricing[0].id));
-        }
-    }, [filteredPricing, packageId]);
+
 
     useEffect(() => {
         if (!packageId || servicesLoading) return;
@@ -348,16 +341,18 @@ export default function OrderConfirmPage() {
     const selectedPackagePrice = Number(selectedPackage?.price) || 0;
     const summaryItems = cartItems.length
         ? cartItems
-        : selectedPackage
-        ? [
-              {
-                  service_id: selectedPackage.id,
-                  name: selectedPackage.label || selectedPackage.name,
-                  price: selectedPackage.price,
-                  quantity: Number(quantity) || 1,
-              },
-          ]
-        : [];
+        : step === 3
+            ? []
+            : selectedPackage
+                ? [
+                    {
+                        service_id: selectedPackage.id,
+                        name: selectedPackage.label || selectedPackage.name,
+                        price: selectedPackage.price,
+                        quantity: Number(quantity) || 1,
+                    },
+                ]
+                : [];
     const totalQuantity = summaryItems.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
     const cartSubtotal = summaryItems.reduce(
         (acc, item) => acc + (Number(item.quantity) || 0) * (Number(item.price) || 0),
@@ -366,9 +361,9 @@ export default function OrderConfirmPage() {
     const summaryTitle =
         summaryItems.length > 0
             ? summaryItems
-                  .map((item) => item.name)
-                  .filter(Boolean)
-                  .join(" • ")
+                .map((item) => item.name)
+                .filter(Boolean)
+                .join(" • ")
             : service?.heading || "Pilih layanan";
     const distanceFromStoreKm = useMemo(
         () => haversineDistanceKm(storeLocation, { lat: location.lat, lng: location.lng }),
@@ -689,6 +684,12 @@ export default function OrderConfirmPage() {
         loadCartSnapshot();
     }, [loadCartSnapshot, step]);
 
+    useEffect(() => {
+        if (step === 3 && !cartLoading && cartItems.length === 0) {
+            router.replace("/service-pick");
+        }
+    }, [step, cartLoading, cartItems, router]);
+
     const renderSteps = () => (
         <div className="counter-one">
             <div className="container">
@@ -703,8 +704,8 @@ export default function OrderConfirmPage() {
                                                 s === 1
                                                     ? "fa fa-clipboard-list"
                                                     : s === 2
-                                                    ? "fa fa-plus-circle"
-                                                    : "fa fa-credit-card"
+                                                        ? "fa fa-plus-circle"
+                                                        : "fa fa-credit-card"
                                             }
                                         ></span>
                                     </div>
@@ -729,89 +730,89 @@ export default function OrderConfirmPage() {
         <div className="service-details__bottom">
             {showLocationStep && (
                 <div className="sidebar__category location-card" id={locationSectionId} style={{ marginTop: 0 }}>
-                <div className="location-card__header">
-                    <div>
-                        <p className="eyebrow">Titik lokasi</p>
-                        <h3 className="location-card__title">Atur pin jemput / antar</h3>
-                        <p className="service-details__bottom-text1" style={{ marginBottom: 10 }}>
-                            Ambil lokasi akurat dengan geolokasi browser lalu rapikan pin manual di area Gentan, Sukoharjo.
-                            Jarak dihitung langsung dari titik toko Kick Clean Gentan untuk estimasi biaya.
-                        </p>
-                        
-                    </div>
-                    <div className="location-card__stats">
-                        <div className="stat-card">
-                            <span className="label">Status pin</span>
-                            <h4>{locationStatus || "Pin siap digerakkan"}</h4>
-                            <p className="muted">Geser atau klik di peta untuk akurasi lokasi.</p>
-                        </div>
-                        <div className="stat-card">
-                            <span className="label">Estimasi jemput</span>
-                            <h4 style={{ color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}>
-                                {isWithinFreeRange ? "Gratis 5-7 km" : "+Rp10.000"}
-                            </h4>
-                            <p className="muted">Biaya dihitung dari titik toko Kick Clean Gentan.</p>
-                        </div>
-                    </div>
-                </div>
+                    <div className="location-card__header">
+                        <div>
+                            <p className="eyebrow">Titik lokasi</p>
+                            <h3 className="location-card__title">Atur pin jemput / antar</h3>
+                            <p className="service-details__bottom-text1" style={{ marginBottom: 10 }}>
+                                Ambil lokasi akurat dengan geolokasi browser lalu rapikan pin manual di area Gentan, Sukoharjo.
+                                Jarak dihitung langsung dari titik toko Kick Clean Gentan untuk estimasi biaya.
+                            </p>
 
-                <div className="location-card__body">
-                    <div className="location-map-shell">
-                        <div className="map-loading-wrap" style={{ marginBottom: 12 }}>
-                            {!mapReady && (
-                                <div className="map-skeleton">
-                                    <div className="map-skeleton__shimmer" />
-                                    <div className="map-skeleton__text">Menyiapkan peta...</div>
-                                </div>
-                            )}
-                            <div
-                                className="contact-page-google-map__one"
-                                ref={mapContainerRef}
-                                style={{ height: 360, borderRadius: 14, overflow: "hidden" }}
-                            ></div>
                         </div>
-                    </div>
-
-                    <div className="location-controls">
-                        <div className="cta-row">
-                            <div className="d-flex" style={{ gap: 10, flexWrap: "wrap" }}>
-                                <button className="thm-btn" type="button" onClick={handleGeoLocate}>
-                                    <span>Gunakan lokasi saya</span>
-                                    <i className="liquid"></i>
-                                </button>
-                                <button
-                                    className="thm-btn ghost"
-                                    type="button"
-                                    onClick={handleFocusGentan}
-                                >
-                                    <span>Fokus ke Gentan</span>
-                                    <i className="liquid"></i>
-                                </button>
+                        <div className="location-card__stats">
+                            <div className="stat-card">
+                                <span className="label">Status pin</span>
+                                <h4>{locationStatus || "Pin siap digerakkan"}</h4>
+                                <p className="muted">Geser atau klik di peta untuk akurasi lokasi.</p>
                             </div>
-                            <p className="muted" style={{ margin: 0 }}>
-                                Mulai dari perkiraan lokasi perangkat, lalu rapikan pin ke titik paling presisi.
-                            </p>
+                            <div className="stat-card">
+                                <span className="label">Estimasi jemput</span>
+                                <h4 style={{ color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}>
+                                    {isWithinFreeRange ? "Gratis 5-7 km" : "+Rp10.000"}
+                                </h4>
+                                <p className="muted">Biaya dihitung dari titik toko Kick Clean Gentan.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="location-card__body">
+                        <div className="location-map-shell">
+                            <div className="map-loading-wrap" style={{ marginBottom: 12 }}>
+                                {!mapReady && (
+                                    <div className="map-skeleton">
+                                        <div className="map-skeleton__shimmer" />
+                                        <div className="map-skeleton__text">Menyiapkan peta...</div>
+                                    </div>
+                                )}
+                                <div
+                                    className="contact-page-google-map__one"
+                                    ref={mapContainerRef}
+                                    style={{ height: 360, borderRadius: 14, overflow: "hidden" }}
+                                ></div>
+                            </div>
                         </div>
 
-                        <p className="service-details__bottom-text1" style={{ marginTop: 4, marginBottom: 4 }}>
-                            Koordinat: {location.lat.toFixed(5)}, {location.lng.toFixed(5)} - geser atau klik pin di peta untuk titik
-                            jemput/antar yang presisi.
-                        </p>
-                        <p
-                            className="service-details__bottom-text1"
-                            style={{ marginTop: 0, fontWeight: 600, color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}
-                        >
-                            Jarak ke toko: {distanceFromStoreKm !== null ? `${distanceFromStoreKm.toFixed(2)} km` : "Belum ada koordinat valid."}
-                            {distanceFromStoreKm !== null && !isWithinFreeRange && " - Biaya jemput +Rp10.000"}
-                        </p>
-                        {locationStatus && (
-                            <p className="service-details__bottom-text1" style={{ color: "var(--thm-base)", marginTop: 0 }}>
-                                {locationStatus}
+                        <div className="location-controls">
+                            <div className="cta-row">
+                                <div className="d-flex" style={{ gap: 10, flexWrap: "wrap" }}>
+                                    <button className="thm-btn" type="button" onClick={handleGeoLocate}>
+                                        <span>Gunakan lokasi saya</span>
+                                        <i className="liquid"></i>
+                                    </button>
+                                    <button
+                                        className="thm-btn ghost"
+                                        type="button"
+                                        onClick={handleFocusGentan}
+                                    >
+                                        <span>Fokus ke Gentan</span>
+                                        <i className="liquid"></i>
+                                    </button>
+                                </div>
+                                <p className="muted" style={{ margin: 0 }}>
+                                    Mulai dari perkiraan lokasi perangkat, lalu rapikan pin ke titik paling presisi.
+                                </p>
+                            </div>
+
+                            <p className="service-details__bottom-text1" style={{ marginTop: 4, marginBottom: 4 }}>
+                                Koordinat: {location.lat.toFixed(5)}, {location.lng.toFixed(5)} - geser atau klik pin di peta untuk titik
+                                jemput/antar yang presisi.
                             </p>
-                        )}
+                            <p
+                                className="service-details__bottom-text1"
+                                style={{ marginTop: 0, fontWeight: 600, color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}
+                            >
+                                Jarak ke toko: {distanceFromStoreKm !== null ? `${distanceFromStoreKm.toFixed(2)} km` : "Belum ada koordinat valid."}
+                                {distanceFromStoreKm !== null && !isWithinFreeRange && " - Biaya jemput +Rp10.000"}
+                            </p>
+                            {locationStatus && (
+                                <p className="service-details__bottom-text1" style={{ color: "var(--thm-base)", marginTop: 0 }}>
+                                    {locationStatus}
+                                </p>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
             )}
             <div className="sidebar__category">
                 <div className="recap-shell">
@@ -824,92 +825,92 @@ export default function OrderConfirmPage() {
                             <i className="fa fa-bolt"></i> Pastikan data sudah tepat
                         </span>
                     </div>
-                <div className="comment-form__input-box">
-                    <div className="recap-tile recap-tile--service">
-                        <div className="recap-tile__icon">
-                            <span className={service?.icon || "fa fa-concierge-bell"}></span>
-                        </div>
-                        <div className="recap-tile__body">
-                            <div className="recap-tile__title-row">
-                                <div>
-                                    <p className="recap-eyebrow">Dipilih</p>
-                                    <h5 className="recap-title">{service?.heading || serviceSlug}</h5>
-                                </div>
-                                <span className="recap-pill recap-pill--success">Aktif</span>
-                            </div>
-                            <p className="recap-desc">
-                                {service?.description ||
-                                    "Detail layanan pilihanmu tampil lebih jelas agar kamu yakin sebelum lanjut."}
-                            </p>
-                            <div className="recap-tags">
-                                <span className="recap-tag">
-                                    <i className="fa fa-layer-group"></i>
-                                    {categoryName || "Kategori layanan"}
-                                </span>
-                                <span className="recap-tag">
-                                    <i className="fa fa-map-marker-alt"></i>
-                                    {shippingMethod === "jemput" ? "Jemput & antar" : "Drop-off ke toko"}
-                                </span>
-                                <span className="recap-tag">
-                                    <i className="fa fa-cube"></i>
-                                    {totalQuantity || quantity} item
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div className="comment-form__input-box">
-                    {servicesLoading && (
-                        <p className="service-details__bottom-text1">Memuat paket layanan...</p>
-                    )}
-                    {servicesError && (
-                        <p className="service-details__bottom-text1" style={{ color: "red" }}>
-                            {servicesError}
-                        </p>
-                    )}
-                    {!servicesLoading && (!filteredPricing.length || !selectedPackage) ? (
-                        <p className="service-details__bottom-text1">Paket layanan belum tersedia.</p>
-                    ) : (
-                        <div className="recap-tile recap-tile--package">
-                            <div className="recap-tile__icon recap-tile__icon--warm">
-                                <span className="fa fa-box-open"></span>
+                    <div className="comment-form__input-box">
+                        <div className="recap-tile recap-tile--service">
+                            <div className="recap-tile__icon">
+                                <span className={service?.icon || "fa fa-concierge-bell"}></span>
                             </div>
                             <div className="recap-tile__body">
                                 <div className="recap-tile__title-row">
                                     <div>
-                                        <p className="recap-eyebrow">Paket aktif</p>
-                                        <h5 className="recap-title">
-                                            {selectedPackage?.label || selectedPackage?.name || "-"}
-                                        </h5>
+                                        <p className="recap-eyebrow">Dipilih</p>
+                                        <h5 className="recap-title">{service?.heading || serviceSlug}</h5>
                                     </div>
-                                    <span className="recap-pill">Sesuai pilihan</span>
+                                    <span className="recap-pill recap-pill--success">Aktif</span>
                                 </div>
-                                {selectedPackage?.note && (
-                                    <p className="recap-desc" style={{ marginBottom: 10 }}>
-                                        {selectedPackage.note}
-                                    </p>
-                                )}
-                                <div className="recap-tags" style={{ marginTop: 10 }}>
-                                    <span className="recap-tag recap-tag--strong">
-                                        <i className="fa fa-coins"></i>
-                                        {formatIDR(selectedPackagePrice)}
+                                <p className="recap-desc">
+                                    {service?.description ||
+                                        "Detail layanan pilihanmu tampil lebih jelas agar kamu yakin sebelum lanjut."}
+                                </p>
+                                <div className="recap-tags">
+                                    <span className="recap-tag">
+                                        <i className="fa fa-layer-group"></i>
+                                        {categoryName || "Kategori layanan"}
+                                    </span>
+                                    <span className="recap-tag">
+                                        <i className="fa fa-map-marker-alt"></i>
+                                        {shippingMethod === "jemput" ? "Jemput & antar" : "Drop-off ke toko"}
                                     </span>
                                     <span className="recap-tag">
                                         <i className="fa fa-cube"></i>
                                         {totalQuantity || quantity} item
                                     </span>
-                                    {serviceSlug === "cuci-tas-dompet-koper" && (
-                                        <span className="recap-tag">
-                                            <i className="fa fa-layer-group"></i>
-                                            {selectedOtherGroup?.label || "-"}
-                                        </span>
-                                    )}
                                 </div>
-                                <p className="recap-hint">Ubah paket dari halaman pemilihan layanan bila diperlukan.</p>
                             </div>
                         </div>
-                    )}
-                </div>
+                    </div>
+                    <div className="comment-form__input-box">
+                        {servicesLoading && (
+                            <p className="service-details__bottom-text1">Memuat paket layanan...</p>
+                        )}
+                        {servicesError && (
+                            <p className="service-details__bottom-text1" style={{ color: "red" }}>
+                                {servicesError}
+                            </p>
+                        )}
+                        {!servicesLoading && (!filteredPricing.length || !selectedPackage) ? (
+                            <p className="service-details__bottom-text1">Paket layanan belum tersedia.</p>
+                        ) : (
+                            <div className="recap-tile recap-tile--package">
+                                <div className="recap-tile__icon recap-tile__icon--warm">
+                                    <span className="fa fa-box-open"></span>
+                                </div>
+                                <div className="recap-tile__body">
+                                    <div className="recap-tile__title-row">
+                                        <div>
+                                            <p className="recap-eyebrow">Paket aktif</p>
+                                            <h5 className="recap-title">
+                                                {selectedPackage?.label || selectedPackage?.name || "-"}
+                                            </h5>
+                                        </div>
+                                        <span className="recap-pill">Sesuai pilihan</span>
+                                    </div>
+                                    {selectedPackage?.note && (
+                                        <p className="recap-desc" style={{ marginBottom: 10 }}>
+                                            {selectedPackage.note}
+                                        </p>
+                                    )}
+                                    <div className="recap-tags" style={{ marginTop: 10 }}>
+                                        <span className="recap-tag recap-tag--strong">
+                                            <i className="fa fa-coins"></i>
+                                            {formatIDR(selectedPackagePrice)}
+                                        </span>
+                                        <span className="recap-tag">
+                                            <i className="fa fa-cube"></i>
+                                            {totalQuantity || quantity} item
+                                        </span>
+                                        {serviceSlug === "cuci-tas-dompet-koper" && (
+                                            <span className="recap-tag">
+                                                <i className="fa fa-layer-group"></i>
+                                                {selectedOtherGroup?.label || "-"}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="recap-hint">Ubah paket dari halaman pemilihan layanan bila diperlukan.</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="comment-form__input-box">
                     <label className="service-details__bottom-subtitle">Nama</label>
@@ -1357,7 +1358,7 @@ export default function OrderConfirmPage() {
             <HeaderOne />
             <Breadcrumb heading="Konfirmasi Order" currentPage="Step Order" />
             <section className="service-details pd-120-0-90">
-                <div className="services-one__pattern" style={{backgroundImage: `url(${BackgroundOne.src})`}}></div>
+                <div className="services-one__pattern" style={{ backgroundImage: `url(${BackgroundOne.src})` }}></div>
                 <div className="container">
                     {renderSteps()}
                     {step === 1 && <StepOne />}
