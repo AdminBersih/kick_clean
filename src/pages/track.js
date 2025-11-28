@@ -130,8 +130,8 @@ export default function TrackPage() {
                     contact && contact.includes("@")
                         ? { email: contact }
                         : contact
-                        ? { phone: contact }
-                        : {};
+                            ? { phone: contact }
+                            : {};
                 const orderData = await trackOrder({
                     orderCode: code,
                     ...contactPayload,
@@ -300,7 +300,7 @@ export default function TrackPage() {
                 label: "Pembayaran",
                 done: Boolean(
                     midtransStatus?.transaction_status &&
-                        ["settlement", "capture", "success"].includes(midtransStatus.transaction_status)
+                    ["settlement", "capture", "success"].includes(midtransStatus.transaction_status)
                 ),
             },
             { key: "processing", label: "Sedang dikerjakan", done: current === "processing" || current === "finished" },
@@ -329,7 +329,7 @@ export default function TrackPage() {
             <HeaderOne />
             <Breadcrumb heading="Track Order" currentPage="Lacak Pesanan" />
             <section className="service-details pd-120-0-90">
-                <div className="services-one__pattern" style={{backgroundImage: `url(${BackgroundOne.src})`}}></div>
+                <div className="services-one__pattern" style={{ backgroundImage: `url(${BackgroundOne.src})` }}></div>
                 <div className="container">
                     {/* <div className="service-details__bottom" style={{ marginBottom: 30 }}>
                         <div className="order-track-hero">
@@ -491,7 +491,13 @@ export default function TrackPage() {
                                     <div className="order-items">
                                         <div className="order-items__head">
                                             <p className="label">Item layanan</p>
-                                            <span className="pill">{order.items?.length || 0} item</span>
+                                            <span className="pill">
+                                                {(order.items || []).reduce((acc, curr) => {
+                                                    if (curr.service_id === "DELIVERY-FEE") return acc;
+                                                    return acc + (Number(curr.quantity) || 0);
+                                                }, 0)}{" "}
+                                                item
+                                            </span>
                                         </div>
                                         <ul className="info-list">
                                             {(order.items || []).map((it) => (
@@ -633,7 +639,7 @@ export default function TrackPage() {
                         </div>
                     </div>
 
-                    
+
                 </div>
             </section>
             <FooterOne />
