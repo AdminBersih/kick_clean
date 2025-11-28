@@ -21,6 +21,7 @@ export default async function handler(
     email,
     address,
     pickupMethod,
+    deliveryFee,
     notes,
   } = req.body;
 
@@ -40,10 +41,24 @@ export default async function handler(
     price: it.price,
     quantity: it.quantity,
   }));
-  const totalPrice = items.reduce(
+  const totalPriceItems = items.reduce(
     (s, it) => s + it.price * (it.quantity || 1),
     0
   );
+
+  let finalTotalPrice = totalPriceItems;
+
+  // Add delivery fee if applicable
+  if (deliveryFee && Number(deliveryFee) > 0) {
+    const fee = Number(deliveryFee);
+    finalTotalPrice += fee;
+    items.push({
+      service_id: "DELIVERY-FEE",
+      name: "Biaya Antar Jemput",
+      price: fee,
+      quantity: 1,
+    });
+  }
 
   // generate orderCode (readable)
   const orderCode = `KC-${Date.now().toString().slice(-6)}-${Math.floor(
@@ -60,28 +75,26 @@ export default async function handler(
     pickupMethod,
     notes,
     items,
-    totalPrice,
+    totalPrice: finalTotalPrice,
     status: "pending",
   });
 
-  // clear cart
-  if (cart._id) await Cart.deleteOne({ _id: cart._id });
-
   const snap = new midtransClient.Snap({
-    isProduction: process.env.MIDTRANS_STATUS_PRODUCTION,
+    isProduction: true,
     serverKey: process.env.MIDTRANS_SERVER_KEY,
+    clientKey: process.env.MIDTRANS_CLIENT_KEY,
   });
 
-  const snapPayload = {
+  const parameter = {
     transaction_details: {
       order_id: orderCode,
-      gross_amount: totalPrice,
+      gross_amount: finalTotalPrice,
     },
     item_details: items.map((i) => ({
       id: i.service_id.toString(),
-      name: i.name,
       price: i.price,
       quantity: i.quantity,
+      name: i.name.substring(0, 50),
     })),
     customer_details: {
       first_name: customerName,
@@ -97,27 +110,43 @@ export default async function handler(
         country_code: "IDN",
       },
     },
-    credit_card: {
-      secure: true,
-    },
+    callbacks: {
+      finish: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/order/status?orderCode=${orderCode}`
+    }
   };
 
-  const transaction = await snap.createTransaction(snapPayload);
+  console.log(`[Create Order] Creating Midtrans Snap transaction for ${orderCode}`);
 
-  // Update order with Midtrans info
+  let transaction;
+  try {
+    transaction = await snap.createTransaction(parameter);
+    console.log("[Create Order] Success:", transaction);
+  } catch (err: any) {
+    console.error("[Create Order] Midtrans Error:", err.message);
+    const statusCode = err.httpStatusCode || 500;
+    return res.status(statusCode).json({
+      message: "Gagal memproses pembayaran.",
+      error: err.message,
+      midtransResponse: err.ApiResponse
+    });
+  }
+
+  // Clear cart ONLY after successful payment creation
+  if (cart._id) await Cart.deleteOne({ _id: cart._id });
+
+  // Update order with Midtrans info (initial status pending)
   await orderDoc.updateOne({
     midtrans: {
       orderId: orderCode,
-      redirectUrl: transaction.redirect_url,
-      paymentStatus: "pending",
+      paymentStatus: "pending", // Snap transaction created
+      token: transaction.token,
+      redirectUrl: transaction.redirect_url
     },
   });
 
-
   // Send notification: email & phone (if provided)
-  const trackingUrl = `${
-    process.env.NEXT_PUBLIC_BASE_URL || ""
-  }/track?orderCode=${orderCode}`;
+  const trackingUrl = `${process.env.NEXT_PUBLIC_BASE_URL || ""
+    }/track?orderCode=${orderCode}`;
 
   if (email) {
     const html = `<p>Terima kasih ${customerName}. Pesanan kamu: <b>${orderCode}</b></p>
@@ -134,5 +163,11 @@ export default async function handler(
 
   return res
     .status(201)
-    .json({ message: "Order created", orderId: orderDoc._id, orderCode, redirectUrl: transaction.redirect_url });
+    .json({
+      message: "Order created",
+      orderId: orderDoc._id,
+      orderCode,
+      token: transaction.token,
+      redirectUrl: transaction.redirect_url
+    });
 }

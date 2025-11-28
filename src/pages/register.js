@@ -60,7 +60,7 @@ export default function RegisterPage() {
         <div className="container">
           <div className="row justify-content-center">
             <div className="col-xl-10 col-lg-11">
-              <div className="contact-page-form__inner auth-card">
+              <div className="contact-page-form__inner auth-card" id="register-card">
                 <div className="row g-4 align-items-center">
                   <div className="col-md-6">
                     <div className="auth-card__intro">
@@ -85,7 +85,7 @@ export default function RegisterPage() {
                       </ul>
                       <div className="auth-card__switch">
                         Sudah punya akun?{" "}
-                        <Link href="/login">
+                        <Link href="/login#login-card">
                           <strong>Masuk</strong>
                         </Link>
                       </div>

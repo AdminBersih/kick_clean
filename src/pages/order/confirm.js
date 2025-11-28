@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import Script from "next/script";
 import SEO from "../../common/seo/Seo";
 import HeaderOne from "../../common/header/HeaderOne";
 import Breadcrumb from "../../common/breadcrumb/Breadcrumb";
@@ -14,20 +15,26 @@ import {
     getPaymentLink,
     recreatePaymentLink,
 } from "@/lib/ordersClient";
-import BackgroundOne from '../../../public/assets/images/pattern/services-v1-pattern.png';
+import BackgroundOne from "../../../public/assets/images/pattern/services-v1-pattern.png";
 
 const storeLocation = { lat: -7.5803738, lng: 110.78332 };
 const gentanCenter = { lat: storeLocation.lat, lng: storeLocation.lng };
 const defaultLocation = { lat: gentanCenter.lat, lng: gentanCenter.lng };
 const locationSectionId = "location-pin-section";
+const SNAP_SRC = "https://app.midtrans.com/snap/snap.js";
 
 const formatIDR = (value) =>
-    new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(value);
+    new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        minimumFractionDigits: 0,
+    }).format(value);
 
 const getServiceBySlug = (slug) => ServiceCategoryCards.find((item) => item.slug === slug);
 const normalizeId = (val) => (val === undefined || val === null ? "" : String(val));
 const successStatuses = ["settlement", "capture", "success"];
 const toRad = (deg) => (deg * Math.PI) / 180;
+
 const haversineDistanceKm = (from, to) => {
     const hasFrom = Number.isFinite(from?.lat) && Number.isFinite(from?.lng);
     const hasTo = Number.isFinite(to?.lat) && Number.isFinite(to?.lng);
@@ -40,7 +47,7 @@ const haversineDistanceKm = (from, to) => {
         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
         Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const earthRadiusKm = 6371.0088; // mean Earth radius for more accurate km result
+    const earthRadiusKm = 6371.0088;
     return earthRadiusKm * c;
 };
 
@@ -76,6 +83,7 @@ export default function OrderConfirmPage() {
     const router = useRouter();
     const { query } = router;
     const { accessToken } = useAuth();
+
     const [step, setStep] = useState(1);
     const [serviceSlug, setServiceSlug] = useState(query.service || ServiceCategoryCards[0].slug);
     const [packageId, setPackageId] = useState(query.packageId || "");
@@ -94,7 +102,10 @@ export default function OrderConfirmPage() {
     const mapContainerRef = useRef(null);
     const mapRef = useRef(null);
     const markerRef = useRef(null);
-    const { services, pricingOptions, loading: servicesLoading, error: servicesError, ensureServiceById } = useServicesData();
+
+    const { services, pricingOptions, loading: servicesLoading, error: servicesError, ensureServiceById } =
+        useServicesData();
+
     const [cartItems, setCartItems] = useState([]);
     const [cartError, setCartError] = useState("");
     const [cartLoading, setCartLoading] = useState(false);
@@ -102,7 +113,9 @@ export default function OrderConfirmPage() {
     const [submitLoading, setSubmitLoading] = useState(false);
     const [payLoading, setPayLoading] = useState(false);
     const [paymentError, setPaymentError] = useState("");
+    const [showSnap, setShowSnap] = useState(false);
 
+    // sync query params
     useEffect(() => {
         if (!router.isReady) return;
         if (query.service) setServiceSlug(query.service);
@@ -114,13 +127,16 @@ export default function OrderConfirmPage() {
         if (query.otherGroup) setOtherGroup(query.otherGroup);
     }, [query, router.isReady]);
 
+    // session id
     useEffect(() => {
         if (typeof window === "undefined") return;
         const sid = getOrCreateSessionId();
         if (sid) setSessionId(sid);
     }, []);
 
+    // restore contact
     useEffect(() => {
+        if (typeof window === "undefined") return;
         try {
             const stored = localStorage.getItem("kickclean-contact");
             if (stored) {
@@ -134,11 +150,12 @@ export default function OrderConfirmPage() {
                     setAddress(parsed.address);
                 }
             }
-        } catch (err) {
-            // ignore storage errors
+        } catch {
+            // ignore
         }
     }, [address]);
 
+    // restore location
     useEffect(() => {
         if (typeof window === "undefined") return;
         try {
@@ -151,8 +168,8 @@ export default function OrderConfirmPage() {
                     setLocationStatus("Lokasi otomatis diambil dari riwayat pin Anda.");
                 }
             }
-        } catch (err) {
-            // ignore storage errors
+        } catch {
+            // ignore
         }
     }, []);
 
@@ -183,21 +200,24 @@ export default function OrderConfirmPage() {
         if (pricingFromCategory.length) return pricingFromCategory;
         return pricingOptions[serviceSlug] || [];
     }, [pricingFromCategory, pricingOptions, serviceSlug]);
+
     const filteredPricing =
         serviceSlug === "cuci-tas-dompet-koper"
             ? pricing.filter((item) =>
-                (OtherTreatmentGroups.find((g) => g.id === otherGroup) || OtherTreatmentGroups[0])?.names.includes(item.name)
+                (OtherTreatmentGroups.find((g) => g.id === otherGroup) || OtherTreatmentGroups[0])?.names.includes(
+                    item.name
+                )
             )
             : pricing;
 
-
-
+    // ensure service by id (when deep link)
     useEffect(() => {
         if (!packageId || servicesLoading) return;
         if (filteredPricing.find((item) => normalizeId(item.id) === normalizeId(packageId))) return;
         ensureServiceById(packageId);
     }, [packageId, filteredPricing, ensureServiceById, servicesLoading]);
 
+    // leaflet css
     useEffect(() => {
         if (typeof window === "undefined") return;
         if (document.getElementById("leaflet-style")) return;
@@ -221,7 +241,7 @@ export default function OrderConfirmPage() {
             el.replaceWith(newEl);
             mapContainerRef.current = newEl;
         } catch {
-            // ignore cleanup errors
+            // ignore
         }
     }, []);
 
@@ -235,7 +255,8 @@ export default function OrderConfirmPage() {
         const leaflet = await import("leaflet");
         if (!mapContainerRef.current) return;
         const L = leaflet.default;
-        // Avoid "Map container is already initialized" by clearing leftover id
+
+        // clear leftover id
         if (mapContainerRef.current._leaflet_id) {
             // eslint-disable-next-line no-underscore-dangle
             mapContainerRef.current._leaflet_id = null;
@@ -254,12 +275,14 @@ export default function OrderConfirmPage() {
         }).addTo(map);
 
         const marker = L.marker([location.lat, location.lng], { draggable: true, icon: markerIcon }).addTo(map);
+
         marker.on("dragend", (e) => {
             const latlng = e.target.getLatLng();
             setLocation({ lat: latlng.lat, lng: latlng.lng });
             setLocationTouched(true);
             setLocationStatus("Pin digeser manual untuk akurasi lokasi.");
         });
+
         map.on("click", (e) => {
             marker.setLatLng(e.latlng);
             setLocation({ lat: e.latlng.lat, lng: e.latlng.lng });
@@ -270,6 +293,7 @@ export default function OrderConfirmPage() {
         mapRef.current = map;
         markerRef.current = marker;
         setMapReady(true);
+
         const resizeTimeout = setTimeout(() => {
             const activeMap = mapRef.current;
             if (
@@ -282,12 +306,14 @@ export default function OrderConfirmPage() {
             try {
                 activeMap.invalidateSize();
             } catch {
-                // ignore resize errors when container is gone
+                // ignore
             }
         }, 200);
+
         return () => clearTimeout(resizeTimeout);
     }, [location.lat, location.lng, resetMapContainer]);
 
+    // mount/unmount map
     useEffect(() => {
         if (step !== 1 || !showLocationStep) {
             if (mapRef.current) {
@@ -302,6 +328,7 @@ export default function OrderConfirmPage() {
             await setupMap();
         };
         run();
+
         return () => {
             if (mapRef.current) {
                 mapRef.current.remove();
@@ -312,6 +339,7 @@ export default function OrderConfirmPage() {
         };
     }, [resetMapContainer, setupMap, showLocationStep, step]);
 
+    // update marker on location change
     useEffect(() => {
         if (!mapReady || !mapRef.current || !markerRef.current) return;
         markerRef.current.setLatLng([location.lat, location.lng]);
@@ -328,17 +356,19 @@ export default function OrderConfirmPage() {
             try {
                 activeMap.invalidateSize();
             } catch {
-                // ignore resize errors when container is gone
+                // ignore
             }
         }, 50);
         return () => clearTimeout(resizeTimeout);
     }, [location, mapReady]);
 
+    // derived data
     const service = getServiceBySlug(serviceSlug);
     const selectedPackage =
         filteredPricing.find((item) => normalizeId(item.id) === normalizeId(packageId)) || filteredPricing[0];
     const selectedOtherGroup = OtherTreatmentGroups.find((g) => g.id === otherGroup);
     const selectedPackagePrice = Number(selectedPackage?.price) || 0;
+
     const summaryItems = cartItems.length
         ? cartItems
         : step === 3
@@ -353,11 +383,13 @@ export default function OrderConfirmPage() {
                     },
                 ]
                 : [];
+
     const totalQuantity = summaryItems.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0);
     const cartSubtotal = summaryItems.reduce(
         (acc, item) => acc + (Number(item.quantity) || 0) * (Number(item.price) || 0),
         0
     );
+
     const summaryTitle =
         summaryItems.length > 0
             ? summaryItems
@@ -365,18 +397,23 @@ export default function OrderConfirmPage() {
                 .filter(Boolean)
                 .join(" • ")
             : service?.heading || "Pilih layanan";
+
     const distanceFromStoreKm = useMemo(
         () => haversineDistanceKm(storeLocation, { lat: location.lat, lng: location.lng }),
         [location.lat, location.lng]
     );
+
     const isWithinFreeRange = distanceFromStoreKm !== null && distanceFromStoreKm <= 7;
     const shippingOptionLabel = shippingMethod === "jemput" ? "Jemput di rumah" : "Antar ke toko";
+
     const shippingFee = useMemo(() => {
         if (shippingMethod !== "jemput") return 0;
         if (distanceFromStoreKm === null) return 0;
         return isWithinFreeRange ? 0 : 10000;
     }, [distanceFromStoreKm, isWithinFreeRange, shippingMethod]);
+
     const orderTotal = cartSubtotal + shippingFee;
+
     const scrollToLocationSection = () => {
         if (typeof window === "undefined") return;
         const runScroll = () => {
@@ -388,6 +425,7 @@ export default function OrderConfirmPage() {
         window.requestAnimationFrame?.(runScroll);
         setTimeout(runScroll, 300);
     };
+
     const alertLocationRequired = () => {
         const message = "Atur pin jemput/antar terlebih dahulu. Koordinat default tidak bisa dipakai.";
         setStepError(message);
@@ -404,7 +442,9 @@ export default function OrderConfirmPage() {
         }
 
         if (!window.isSecureContext) {
-            setLocationStatus("Izin lokasi diblokir karena koneksi belum HTTPS. Gunakan pin manual atau fokus ke Gentan.");
+            setLocationStatus(
+                "Izin lokasi diblokir karena koneksi belum HTTPS. Gunakan pin manual atau fokus ke Gentan."
+            );
             return;
         }
 
@@ -428,7 +468,7 @@ export default function OrderConfirmPage() {
                         }
                     }
                     setLocationStatus("Tidak dapat mengambil lokasi. Pastikan izin lokasi aktif atau isi manual.");
-                } catch (err) {
+                } catch {
                     setLocationStatus("Tidak dapat mengambil lokasi. Pastikan izin lokasi aktif atau isi manual.");
                 }
             },
@@ -443,14 +483,6 @@ export default function OrderConfirmPage() {
         setAutoLocateTriggered(true);
         handleGeoLocate();
     }, [autoLocateTriggered, handleGeoLocate, showLocationStep, step]);
-
-    const handleManualLatLngChange = (field, value) => {
-        const parsed = parseFloat(value);
-        if (Number.isNaN(parsed)) return;
-        setLocation((prev) => ({ ...prev, [field]: parsed }));
-        setLocationTouched(true);
-        setLocationStatus("Koordinat diperbarui secara manual.");
-    };
 
     const handleFocusGentan = () => {
         setLocation({ lat: gentanCenter.lat, lng: gentanCenter.lng });
@@ -554,6 +586,31 @@ export default function OrderConfirmPage() {
         }
     };
 
+    const handleUpdateQuantity = async (serviceId, newQty) => {
+        if (!serviceId) return;
+        const qty = parseInt(newQty);
+        if (isNaN(qty) || qty < 1) return;
+
+        try {
+            setCartLoading(true);
+            const sid = sessionId || getOrCreateSessionId();
+            const res = await updateCartItem({
+                action: "set",
+                serviceId,
+                quantity: qty,
+                sessionId: sid,
+                token: accessToken,
+            });
+            if (res.sessionId) setSessionId(res.sessionId);
+            setCartItems(res.cart?.items || []);
+            setCartError("");
+        } catch (err) {
+            setCartError(err?.message || "Gagal update quantity");
+        } finally {
+            setCartLoading(false);
+        }
+    };
+
     const persistLastOrderShortcut = (orderCodeValue) => {
         if (typeof window === "undefined" || !orderCodeValue) return;
         try {
@@ -566,8 +623,8 @@ export default function OrderConfirmPage() {
                     savedAt: Date.now(),
                 })
             );
-        } catch (err) {
-            // ignore storage errors
+        } catch {
+            // ignore
         }
     };
 
@@ -609,6 +666,7 @@ export default function OrderConfirmPage() {
                 await handleAddToCart();
                 await loadCartSnapshot();
             }
+
             const { data } = await createOrder({
                 sessionId: sid,
                 customerName: contact.name,
@@ -616,62 +674,47 @@ export default function OrderConfirmPage() {
                 email: contact.email,
                 address,
                 pickupMethod: shippingMethod === "jemput" ? "pickup" : "dropoff",
+                deliveryFee: shippingFee,
                 notes,
                 token: accessToken,
             });
+
             const orderCode =
-                data?.orderCode || data?.order?.orderCode || data?.order_code || data?.order?.code || data?.code;
-            let redirectUrl = pickPaymentUrl(data);
+                data?.orderCode ||
+                data?.order?.orderCode ||
+                data?.order_code ||
+                data?.order?.code ||
+                data?.code;
+
             persistLastOrderShortcut(orderCode);
 
-            if (orderCode) {
-                try {
-                    const statusPayload = await getMidtransStatus({ orderCode, token: accessToken });
-                    const trxStatus =
-                        statusPayload?.transaction_status || statusPayload?.transactionStatus || statusPayload?.status;
-                    if (trxStatus && successStatuses.includes(trxStatus)) {
-                        openPaymentAndTrack(orderCode);
-                        return;
-                    }
-                } catch (statusErr) {
-                    if (process.env.NODE_ENV !== "production") {
-                        console.warn("Midtrans status error", statusErr);
-                    }
-                }
-
-                if (!redirectUrl) {
-                    try {
-                        const paymentPayload = await getPaymentLink({ orderCode, token: accessToken });
-                        redirectUrl = pickPaymentUrl(paymentPayload) || pickPaymentUrl(paymentPayload?.data || {});
-                    } catch (linkErr) {
-                        setPaymentError(linkErr?.message || "Gagal mengambil link pembayaran.");
-                    }
-                }
-
-                if (!redirectUrl) {
-                    try {
-                        const recreatePayload = await recreatePaymentLink({ orderCode, token: accessToken });
-                        redirectUrl = pickPaymentUrl(recreatePayload) || pickPaymentUrl(recreatePayload?.data || {});
-                    } catch (recreateErr) {
-                        setPaymentError(recreateErr?.message || "Gagal membuat ulang link pembayaran.");
-                    }
-                }
-
-                if (redirectUrl) {
-                    openPaymentAndTrack(orderCode, redirectUrl);
-                    return;
-                }
-
+            const snapToken = data?.token;
+            if (snapToken && window.snap) {
+                window.snap.pay(snapToken, {
+                    onSuccess: function (result) {
+                        router.push(
+                            `/order/status?orderCode=${orderCode}&status_code=200&transaction_status=settlement`
+                        );
+                    },
+                    onPending: function (result) {
+                        router.push(
+                            `/order/status?orderCode=${orderCode}&status_code=201&transaction_status=pending`
+                        );
+                    },
+                    onError: function (result) {
+                        setPaymentError("Pembayaran gagal atau dibatalkan.");
+                        console.error("Snap Error:", result);
+                    },
+                    onClose: function () {
+                        setPaymentError(
+                            "Anda menutup popup pembayaran sebelum menyelesaikan transaksi."
+                        );
+                    },
+                });
+            } else {
+                setPaymentError("Gagal memuat pembayaran Snap. Token tidak ditemukan.");
                 openPaymentAndTrack(orderCode);
-                return;
             }
-
-            if (redirectUrl) {
-                openPaymentAndTrack(orderCode, redirectUrl);
-                return;
-            }
-
-            openPaymentAndTrack(orderCode);
         } catch (err) {
             setPaymentError(err?.message || "Gagal membuat order, coba lagi.");
         } finally {
@@ -679,6 +722,7 @@ export default function OrderConfirmPage() {
         }
     };
 
+    // cart auto-load at step 3
     useEffect(() => {
         if (step !== 3) return;
         loadCartSnapshot();
@@ -696,7 +740,10 @@ export default function OrderConfirmPage() {
                 <div className="row">
                     {[1, 2, 3].map((s) => (
                         <div className="col-xl-4 col-lg-4 col-md-4" key={s}>
-                            <div className="counter-one__single" style={step === s ? { background: "#f0f6ff" } : {}}>
+                            <div
+                                className="counter-one__single"
+                                style={step === s ? { background: "#f0f6ff" } : {}}
+                            >
                                 <div className="counter-one__single-inner">
                                     <div className="icon-box">
                                         <span
@@ -712,7 +759,8 @@ export default function OrderConfirmPage() {
                                     <div className="text-box">
                                         <h3>Step {s}</h3>
                                         <p>
-                                            {s === 1 && (showLocationStep ? "Lokasi & data pemesan" : "Order recap")}
+                                            {s === 1 &&
+                                                (showLocationStep ? "Lokasi & data pemesan" : "Order recap")}
                                             {s === 2 && "Tambah layanan (opsional)"}
                                             {s === 3 && "Ringkasan & pembayaran"}
                                         </p>
@@ -729,16 +777,23 @@ export default function OrderConfirmPage() {
     const StepOne = () => (
         <div className="service-details__bottom">
             {showLocationStep && (
-                <div className="sidebar__category location-card" id={locationSectionId} style={{ marginTop: 0 }}>
+                <div
+                    className="sidebar__category location-card"
+                    id={locationSectionId}
+                    style={{ marginTop: 0 }}
+                >
                     <div className="location-card__header">
                         <div>
                             <p className="eyebrow">Titik lokasi</p>
                             <h3 className="location-card__title">Atur pin jemput / antar</h3>
-                            <p className="service-details__bottom-text1" style={{ marginBottom: 10 }}>
-                                Ambil lokasi akurat dengan geolokasi browser lalu rapikan pin manual di area Gentan, Sukoharjo.
-                                Jarak dihitung langsung dari titik toko Kick Clean Gentan untuk estimasi biaya.
+                            <p
+                                className="service-details__bottom-text1"
+                                style={{ marginBottom: 10 }}
+                            >
+                                Ambil lokasi akurat dengan geolokasi browser lalu rapikan pin manual di area
+                                Gentan, Sukoharjo. Jarak dihitung langsung dari titik toko Kick Clean Gentan
+                                untuk estimasi biaya.
                             </p>
-
                         </div>
                         <div className="location-card__stats">
                             <div className="stat-card">
@@ -748,35 +803,57 @@ export default function OrderConfirmPage() {
                             </div>
                             <div className="stat-card">
                                 <span className="label">Estimasi jemput</span>
-                                <h4 style={{ color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}>
+                                <h4
+                                    style={{
+                                        color: isWithinFreeRange ? "#1e9e52" : "#d0352f",
+                                    }}
+                                >
                                     {isWithinFreeRange ? "Gratis 5-7 km" : "+Rp10.000"}
                                 </h4>
-                                <p className="muted">Biaya dihitung dari titik toko Kick Clean Gentan.</p>
+                                <p className="muted">
+                                    Biaya dihitung dari titik toko Kick Clean Gentan.
+                                </p>
                             </div>
                         </div>
                     </div>
 
                     <div className="location-card__body">
                         <div className="location-map-shell">
-                            <div className="map-loading-wrap" style={{ marginBottom: 12 }}>
+                            <div
+                                className="map-loading-wrap"
+                                style={{ marginBottom: 12 }}
+                            >
                                 {!mapReady && (
                                     <div className="map-skeleton">
                                         <div className="map-skeleton__shimmer" />
-                                        <div className="map-skeleton__text">Menyiapkan peta...</div>
+                                        <div className="map-skeleton__text">
+                                            Menyiapkan peta...
+                                        </div>
                                     </div>
                                 )}
                                 <div
                                     className="contact-page-google-map__one"
                                     ref={mapContainerRef}
-                                    style={{ height: 360, borderRadius: 14, overflow: "hidden" }}
+                                    style={{
+                                        height: 360,
+                                        borderRadius: 14,
+                                        overflow: "hidden",
+                                    }}
                                 ></div>
                             </div>
                         </div>
 
                         <div className="location-controls">
                             <div className="cta-row">
-                                <div className="d-flex" style={{ gap: 10, flexWrap: "wrap" }}>
-                                    <button className="thm-btn" type="button" onClick={handleGeoLocate}>
+                                <div
+                                    className="d-flex"
+                                    style={{ gap: 10, flexWrap: "wrap" }}
+                                >
+                                    <button
+                                        className="thm-btn"
+                                        type="button"
+                                        onClick={handleGeoLocate}
+                                    >
                                         <span>Gunakan lokasi saya</span>
                                         <i className="liquid"></i>
                                     </button>
@@ -790,23 +867,43 @@ export default function OrderConfirmPage() {
                                     </button>
                                 </div>
                                 <p className="muted" style={{ margin: 0 }}>
-                                    Mulai dari perkiraan lokasi perangkat, lalu rapikan pin ke titik paling presisi.
+                                    Mulai dari perkiraan lokasi perangkat, lalu rapikan pin ke
+                                    titik paling presisi.
                                 </p>
                             </div>
 
-                            <p className="service-details__bottom-text1" style={{ marginTop: 4, marginBottom: 4 }}>
-                                Koordinat: {location.lat.toFixed(5)}, {location.lng.toFixed(5)} - geser atau klik pin di peta untuk titik
-                                jemput/antar yang presisi.
+                            <p
+                                className="service-details__bottom-text1"
+                                style={{ marginTop: 4, marginBottom: 4 }}
+                            >
+                                Koordinat: {location.lat.toFixed(5)},{" "}
+                                {location.lng.toFixed(5)} - geser atau klik pin di peta untuk
+                                titik jemput/antar yang presisi.
                             </p>
                             <p
                                 className="service-details__bottom-text1"
-                                style={{ marginTop: 0, fontWeight: 600, color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}
+                                style={{
+                                    marginTop: 0,
+                                    fontWeight: 600,
+                                    color: isWithinFreeRange ? "#1e9e52" : "#d0352f",
+                                }}
                             >
-                                Jarak ke toko: {distanceFromStoreKm !== null ? `${distanceFromStoreKm.toFixed(2)} km` : "Belum ada koordinat valid."}
-                                {distanceFromStoreKm !== null && !isWithinFreeRange && " - Biaya jemput +Rp10.000"}
+                                Jarak ke toko:{" "}
+                                {distanceFromStoreKm !== null
+                                    ? `${distanceFromStoreKm.toFixed(2)} km`
+                                    : "Belum ada koordinat valid."}
+                                {distanceFromStoreKm !== null &&
+                                    !isWithinFreeRange &&
+                                    " - Biaya jemput +Rp10.000"}
                             </p>
                             {locationStatus && (
-                                <p className="service-details__bottom-text1" style={{ color: "var(--thm-base)", marginTop: 0 }}>
+                                <p
+                                    className="service-details__bottom-text1"
+                                    style={{
+                                        color: "var(--thm-base)",
+                                        marginTop: 0,
+                                    }}
+                                >
                                     {locationStatus}
                                 </p>
                             )}
@@ -814,12 +911,18 @@ export default function OrderConfirmPage() {
                     </div>
                 </div>
             )}
+
             <div className="sidebar__category">
                 <div className="recap-shell">
                     <div className="recap-shell__heading">
                         <div>
                             <p className="recap-eyebrow">Ringkasan pilihan</p>
-                            <h4 className="sidebar__title" style={{ marginBottom: 0 }}>Order Recap</h4>
+                            <h4
+                                className="sidebar__title"
+                                style={{ marginBottom: 0 }}
+                            >
+                                Order Recap
+                            </h4>
                         </div>
                         <span className="recap-pill recap-pill--mono">
                             <i className="fa fa-bolt"></i> Pastikan data sudah tepat
@@ -828,15 +931,21 @@ export default function OrderConfirmPage() {
                     <div className="comment-form__input-box">
                         <div className="recap-tile recap-tile--service">
                             <div className="recap-tile__icon">
-                                <span className={service?.icon || "fa fa-concierge-bell"}></span>
+                                <span
+                                    className={service?.icon || "fa fa-concierge-bell"}
+                                ></span>
                             </div>
                             <div className="recap-tile__body">
                                 <div className="recap-tile__title-row">
                                     <div>
                                         <p className="recap-eyebrow">Dipilih</p>
-                                        <h5 className="recap-title">{service?.heading || serviceSlug}</h5>
+                                        <h5 className="recap-title">
+                                            {service?.heading || serviceSlug}
+                                        </h5>
                                     </div>
-                                    <span className="recap-pill recap-pill--success">Aktif</span>
+                                    <span className="recap-pill recap-pill--success">
+                                        Aktif
+                                    </span>
                                 </div>
                                 <p className="recap-desc">
                                     {service?.description ||
@@ -849,7 +958,9 @@ export default function OrderConfirmPage() {
                                     </span>
                                     <span className="recap-tag">
                                         <i className="fa fa-map-marker-alt"></i>
-                                        {shippingMethod === "jemput" ? "Jemput & antar" : "Drop-off ke toko"}
+                                        {shippingMethod === "jemput"
+                                            ? "Jemput & antar"
+                                            : "Drop-off ke toko"}
                                     </span>
                                     <span className="recap-tag">
                                         <i className="fa fa-cube"></i>
@@ -859,17 +970,26 @@ export default function OrderConfirmPage() {
                             </div>
                         </div>
                     </div>
+
                     <div className="comment-form__input-box">
                         {servicesLoading && (
-                            <p className="service-details__bottom-text1">Memuat paket layanan...</p>
+                            <p className="service-details__bottom-text1">
+                                Memuat paket layanan...
+                            </p>
                         )}
                         {servicesError && (
-                            <p className="service-details__bottom-text1" style={{ color: "red" }}>
+                            <p
+                                className="service-details__bottom-text1"
+                                style={{ color: "red" }}
+                            >
                                 {servicesError}
                             </p>
                         )}
-                        {!servicesLoading && (!filteredPricing.length || !selectedPackage) ? (
-                            <p className="service-details__bottom-text1">Paket layanan belum tersedia.</p>
+                        {!servicesLoading &&
+                            (!filteredPricing.length || !selectedPackage) ? (
+                            <p className="service-details__bottom-text1">
+                                Paket layanan belum tersedia.
+                            </p>
                         ) : (
                             <div className="recap-tile recap-tile--package">
                                 <div className="recap-tile__icon recap-tile__icon--warm">
@@ -880,17 +1000,27 @@ export default function OrderConfirmPage() {
                                         <div>
                                             <p className="recap-eyebrow">Paket aktif</p>
                                             <h5 className="recap-title">
-                                                {selectedPackage?.label || selectedPackage?.name || "-"}
+                                                {selectedPackage?.label ||
+                                                    selectedPackage?.name ||
+                                                    "-"}
                                             </h5>
                                         </div>
-                                        <span className="recap-pill">Sesuai pilihan</span>
+                                        <span className="recap-pill">
+                                            Sesuai pilihan
+                                        </span>
                                     </div>
                                     {selectedPackage?.note && (
-                                        <p className="recap-desc" style={{ marginBottom: 10 }}>
+                                        <p
+                                            className="recap-desc"
+                                            style={{ marginBottom: 10 }}
+                                        >
                                             {selectedPackage.note}
                                         </p>
                                     )}
-                                    <div className="recap-tags" style={{ marginTop: 10 }}>
+                                    <div
+                                        className="recap-tags"
+                                        style={{ marginTop: 10 }}
+                                    >
                                         <span className="recap-tag recap-tag--strong">
                                             <i className="fa fa-coins"></i>
                                             {formatIDR(selectedPackagePrice)}
@@ -906,19 +1036,28 @@ export default function OrderConfirmPage() {
                                             </span>
                                         )}
                                     </div>
-                                    <p className="recap-hint">Ubah paket dari halaman pemilihan layanan bila diperlukan.</p>
+                                    <p className="recap-hint">
+                                        Ubah paket dari halaman pemilihan layanan bila
+                                        diperlukan.
+                                    </p>
                                 </div>
                             </div>
                         )}
                     </div>
                 </div>
+
                 <div className="comment-form__input-box">
                     <label className="service-details__bottom-subtitle">Nama</label>
                     <input
                         type="text"
                         className="comment-form__textarea"
                         value={contact.name}
-                        onChange={(e) => setContact((prev) => ({ ...prev, name: e.target.value }))}
+                        onChange={(e) =>
+                            setContact((prev) => ({
+                                ...prev,
+                                name: e.target.value,
+                            }))
+                        }
                     />
                 </div>
                 <div className="comment-form__input-box">
@@ -927,20 +1066,34 @@ export default function OrderConfirmPage() {
                         type="email"
                         className="comment-form__textarea"
                         value={contact.email}
-                        onChange={(e) => setContact((prev) => ({ ...prev, email: e.target.value }))}
+                        onChange={(e) =>
+                            setContact((prev) => ({
+                                ...prev,
+                                email: e.target.value,
+                            }))
+                        }
                     />
                 </div>
                 <div className="comment-form__input-box">
-                    <label className="service-details__bottom-subtitle">No. WhatsApp</label>
+                    <label className="service-details__bottom-subtitle">
+                        No. WhatsApp
+                    </label>
                     <input
                         type="text"
                         className="comment-form__textarea"
                         value={contact.phone}
-                        onChange={(e) => setContact((prev) => ({ ...prev, phone: e.target.value }))}
+                        onChange={(e) =>
+                            setContact((prev) => ({
+                                ...prev,
+                                phone: e.target.value,
+                            }))
+                        }
                     />
                 </div>
                 <div className="comment-form__input-box">
-                    <label className="service-details__bottom-subtitle">Alamat lengkap</label>
+                    <label className="service-details__bottom-subtitle">
+                        Alamat lengkap
+                    </label>
                     <textarea
                         className="comment-form__textarea"
                         rows={3}
@@ -949,48 +1102,95 @@ export default function OrderConfirmPage() {
                     />
                 </div>
                 <div className="comment-form__input-box">
-                    <label className="service-details__bottom-subtitle">Metode pengiriman</label>
-                    <div className="recap-tile recap-tile--package" style={{ alignItems: "flex-start" }}>
+                    <label className="service-details__bottom-subtitle">
+                        Metode pengiriman
+                    </label>
+                    <div
+                        className="recap-tile recap-tile--package"
+                        style={{ alignItems: "flex-start" }}
+                    >
                         <div className="recap-tile__icon recap-tile__icon--warm">
                             <span className="fa fa-truck"></span>
                         </div>
                         <div className="recap-tile__body">
                             <div className="recap-tile__title-row">
                                 <div>
-                                    <p className="recap-eyebrow">Atur pengiriman di halaman ini</p>
-                                    <h5 className="recap-title" style={{ marginBottom: 6 }}>{shippingOptionLabel}</h5>
+                                    <p className="recap-eyebrow">
+                                        Atur pengiriman di halaman ini
+                                    </p>
+                                    <h5
+                                        className="recap-title"
+                                        style={{ marginBottom: 6 }}
+                                    >
+                                        {shippingOptionLabel}
+                                    </h5>
                                 </div>
                                 <button
                                     type="button"
                                     className="shipping-edit-btn"
-                                    onClick={() => setShippingEditOpen((prev) => !prev)}
+                                    onClick={() =>
+                                        setShippingEditOpen((prev) => !prev)
+                                    }
                                 >
-                                    <i className="fa fa-edit" aria-hidden="true"></i>
-                                    <span>{shippingEditOpen ? "Tutup edit" : "Edit pengiriman"}</span>
+                                    <i
+                                        className="fa fa-edit"
+                                        aria-hidden="true"
+                                    ></i>
+                                    <span>
+                                        {shippingEditOpen
+                                            ? "Tutup edit"
+                                            : "Edit pengiriman"}
+                                    </span>
                                 </button>
                             </div>
-                            <p className="recap-desc" style={{ marginBottom: 8 }}>
+                            <p
+                                className="recap-desc"
+                                style={{ marginBottom: 8 }}
+                            >
                                 {shippingMethod === "jemput"
                                     ? "Gratis 5-7 km, di atas itu biaya jemput +Rp10.000."
                                     : "Drop-off langsung ke toko tanpa ongkir."}
                             </p>
-                            <div className="recap-tags" style={{ marginTop: 10 }}>
+                            <div
+                                className="recap-tags"
+                                style={{ marginTop: 10 }}
+                            >
                                 <span className="recap-tag recap-tag--strong">
                                     <i className="fa fa-coins"></i>
-                                    {shippingFee === 0 ? "Gratis" : formatIDR(shippingFee)}
+                                    {shippingFee === 0
+                                        ? "Gratis"
+                                        : formatIDR(shippingFee)}
                                 </span>
                             </div>
-                            <div className="recap-tags" style={{ marginTop: 8, gap: 8, display: "flex", flexWrap: "wrap" }}>
+                            <div
+                                className="recap-tags"
+                                style={{
+                                    marginTop: 8,
+                                    gap: 8,
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                }}
+                            >
                                 {shippingEditOpen && (
                                     <div className="shipping-select-wrap">
-                                        <label className="shipping-select-label">Pilih metode</label>
+                                        <label className="shipping-select-label">
+                                            Pilih metode
+                                        </label>
                                         <select
                                             className="shipping-select"
                                             value={shippingMethod}
-                                            onChange={(e) => handleShippingChange(e.target.value)}
+                                            onChange={(e) =>
+                                                handleShippingChange(
+                                                    e.target.value
+                                                )
+                                            }
                                         >
-                                            <option value="toko">Datang ke toko (gratis)</option>
-                                            <option value="jemput">Jemput di rumah (gratis 5-7 km)</option>
+                                            <option value="toko">
+                                                Datang ke toko (gratis)
+                                            </option>
+                                            <option value="jemput">
+                                                Jemput di rumah (gratis 5-7 km)
+                                            </option>
                                         </select>
                                     </div>
                                 )}
@@ -999,7 +1199,9 @@ export default function OrderConfirmPage() {
                     </div>
                 </div>
                 <div className="comment-form__input-box">
-                    <label className="service-details__bottom-subtitle">Jumlah items : {' '}</label>
+                    <label className="service-details__bottom-subtitle">
+                        Jumlah items :{" "}
+                    </label>
                     <input
                         type="number"
                         min="1"
@@ -1009,7 +1211,9 @@ export default function OrderConfirmPage() {
                     />
                 </div>
                 <div className="comment-form__input-box">
-                    <label className="service-details__bottom-subtitle">Catatan</label>
+                    <label className="service-details__bottom-subtitle">
+                        Catatan
+                    </label>
                     <textarea
                         className="comment-form__textarea"
                         rows={3}
@@ -1020,13 +1224,27 @@ export default function OrderConfirmPage() {
             </div>
 
             {stepError && (
-                <p className="service-details__bottom-text1" style={{ color: "red" }}>
+                <p
+                    className="service-details__bottom-text1"
+                    style={{ color: "red" }}
+                >
                     {stepError}
                 </p>
             )}
 
-            <div className="d-flex" style={{ gap: 10, justifyContent: "space-between", marginTop: 20 }}>
-                <button className="thm-btn" type="button" onClick={() => router.back()}>
+            <div
+                className="d-flex"
+                style={{
+                    gap: 10,
+                    justifyContent: "space-between",
+                    marginTop: 20,
+                }}
+            >
+                <button
+                    className="thm-btn"
+                    type="button"
+                    onClick={() => router.back()}
+                >
                     <span>Kembali</span>
                     <i className="liquid"></i>
                 </button>
@@ -1037,24 +1255,35 @@ export default function OrderConfirmPage() {
                         if (!validateStepOne()) return;
                         try {
                             setSubmitLoading(true);
-                            if (typeof window !== "undefined" && showLocationStep && locationTouched) {
+                            if (
+                                typeof window !== "undefined" &&
+                                showLocationStep &&
+                                locationTouched
+                            ) {
                                 localStorage.setItem(
                                     "kickclean-location",
-                                    JSON.stringify({ lat: location.lat, lng: location.lng })
+                                    JSON.stringify({
+                                        lat: location.lat,
+                                        lng: location.lng,
+                                    })
                                 );
                             }
                             await handleAddToCart();
                             await loadCartSnapshot();
                             setStep(2);
                         } catch (err) {
-                            setStepError(err?.message || "Gagal menambah ke keranjang");
+                            setStepError(
+                                err?.message || "Gagal menambah ke keranjang"
+                            );
                         } finally {
                             setSubmitLoading(false);
                         }
                     }}
                     disabled={submitLoading}
                 >
-                    <span>{submitLoading ? "Memproses..." : "Lanjutkan"}</span>
+                    <span>
+                        {submitLoading ? "Memproses..." : "Lanjutkan"}
+                    </span>
                     <i className="liquid"></i>
                 </button>
             </div>
@@ -1065,11 +1294,18 @@ export default function OrderConfirmPage() {
         <div className="service-details__bottom">
             <div className="row order-addons-grid">
                 {ServiceCategoryCards.map((item) => (
-                    <div className="col-xl-4 col-lg-4 col-md-6" key={item.id}>
+                    <div
+                        className="col-xl-4 col-lg-4 col-md-6"
+                        key={item.id}
+                    >
                         <div className="services-one__single">
                             <div className="services-one__single-img">
                                 <div className="services-one__single-img-inner">
-                                    <img className="parallax-img" src={item.image} alt={item.alt} />
+                                    <img
+                                        className="parallax-img"
+                                        src={item.image}
+                                        alt={item.alt}
+                                    />
                                 </div>
                                 <div className="icon">
                                     <span className={item.icon}></span>
@@ -1094,8 +1330,19 @@ export default function OrderConfirmPage() {
                 ))}
             </div>
 
-            <div className="d-flex" style={{ gap: 10, marginTop: 20, justifyContent: "space-between" }}>
-                <button className="thm-btn" type="button" onClick={() => setStep(1)}>
+            <div
+                className="d-flex"
+                style={{
+                    gap: 10,
+                    marginTop: 20,
+                    justifyContent: "space-between",
+                }}
+            >
+                <button
+                    className="thm-btn"
+                    type="button"
+                    onClick={() => setStep(1)}
+                >
                     <span>Kembali</span>
                     <i className="liquid"></i>
                 </button>
@@ -1122,7 +1369,9 @@ export default function OrderConfirmPage() {
                     <h3 className="summary-title">{summaryTitle}</h3>
                     <div className="total-row">
                         <span>Total pembayaran</span>
-                        <div className="total-amount">{formatIDR(orderTotal || 0)}</div>
+                        <div className="total-amount">
+                            {formatIDR(orderTotal || 0)}
+                        </div>
                     </div>
                     <p className="muted">
                         Estimasi untuk {totalQuantity || quantity} item,{" "}
@@ -1133,19 +1382,19 @@ export default function OrderConfirmPage() {
                     </p>
                 </div>
                 <div className="pill-wrap">
-                    {/* <span className="pill">
-                        <i className="fa fa-gem"></i>
-                        {selectedPackage?.label || "Paket belum dipilih"}
-                    </span> */}
                     {serviceSlug === "cuci-tas-dompet-koper" && (
                         <span className="pill">
                             <i className="fa fa-layer-group"></i>
-                            {OtherTreatmentGroups.find((g) => g.id === otherGroup)?.label || "Bag & Wallet"}
+                            {OtherTreatmentGroups.find(
+                                (g) => g.id === otherGroup
+                            )?.label || "Bag & Wallet"}
                         </span>
                     )}
                     <span className="pill">
                         <i className="fa fa-map-marker-alt"></i>
-                        {shippingMethod === "jemput" ? "Jemput di rumah" : "Antar ke toko"}
+                        {shippingMethod === "jemput"
+                            ? "Jemput di rumah"
+                            : "Antar ke toko"}
                     </span>
                     <span className="pill">
                         <i className="fa fa-cube"></i>
@@ -1155,7 +1404,8 @@ export default function OrderConfirmPage() {
             </div>
 
             <div className="grid-cards">
-                <div className="recap-card">
+                {/* Card: Detail pemesan + pilih metode pembayaran */}
+                <div className="recap-card" id="detail pemesanan">
                     <div className="card-header">
                         <div className="icon-bubble">
                             <span className="fa fa-user"></span>
@@ -1180,18 +1430,20 @@ export default function OrderConfirmPage() {
                             <span className="value">{address || "-"}</span>
                         </li>
                     </ul>
+
+                    <div className="mt-4"></div>
                 </div>
 
+
+
+                {/* Card: Ringkasan order */}
                 <div className="recap-card">
                     <div className="card-header">
                         <div className="icon-bubble">
                             <span className="fa fa-receipt"></span>
                         </div>
                         <div>
-                            {/* <p className="label"></p> */}
-                            <h4>
-                                Detail order
-                            </h4>
+                            <h4>Detail order</h4>
                         </div>
                         <span className="badge-soft">Ringkasan</span>
                     </div>
@@ -1205,7 +1457,12 @@ export default function OrderConfirmPage() {
                         {cartError && (
                             <li>
                                 <span>Keranjang</span>
-                                <span className="value" style={{ color: "red" }}>{cartError}</span>
+                                <span
+                                    className="value"
+                                    style={{ color: "red" }}
+                                >
+                                    {cartError}
+                                </span>
                             </li>
                         )}
                         {summaryItems.map((item) => {
@@ -1213,20 +1470,47 @@ export default function OrderConfirmPage() {
                             const unit = Number(item.price) || 0;
                             const lineTotal = qty * unit;
                             return (
-                                <li key={item.service_id || item.name} className="cart-line">
+                                <li
+                                    key={item.service_id || item.name}
+                                    className="cart-line"
+                                >
                                     <div className="cart-line__info">
                                         <span>
                                             {item.name || "Layanan"}{" "}
-                                            <span className="value" style={{ fontWeight: 400 }}>
-                                                ({qty}x)
-                                            </span>
                                         </span>
                                         <span className="value">
                                             {formatIDR(unit)}{" "}
-                                            <span className="muted" style={{ marginLeft: 6 }}>
+                                            <span
+                                                className="muted"
+                                                style={{ marginLeft: 6 }}
+                                            >
                                                 {formatIDR(lineTotal)}
                                             </span>
                                         </span>
+                                    </div>
+                                    <div style={{ display: "inline-block", marginLeft: 8 }}>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={qty}
+                                            onChange={(e) =>
+                                                handleUpdateQuantity(
+                                                    item.service_id ||
+                                                    item.id ||
+                                                    item._id ||
+                                                    item.serviceId,
+                                                    e.target.value
+                                                )
+                                            }
+                                            style={{
+                                                width: 60,
+                                                padding: "2px 8px",
+                                                borderRadius: 4,
+                                                border: "1px solid #ddd",
+                                                fontSize: 14,
+                                            }}
+                                            disabled={cartLoading}
+                                        />
                                     </div>
                                     {cartItems.length > 0 && (
                                         <button
@@ -1234,7 +1518,10 @@ export default function OrderConfirmPage() {
                                             className="remove-cart-btn"
                                             onClick={() =>
                                                 handleRemoveCartItem(
-                                                    item.service_id || item.id || item._id || item.serviceId
+                                                    item.service_id ||
+                                                    item.id ||
+                                                    item._id ||
+                                                    item.serviceId
                                                 )
                                             }
                                             disabled={cartLoading}
@@ -1250,14 +1537,18 @@ export default function OrderConfirmPage() {
                         {!summaryItems.length && (
                             <li>
                                 <span>Keranjang</span>
-                                <span className="value">Belum ada item.</span>
+                                <span className="value">
+                                    Belum ada item.
+                                </span>
                             </li>
                         )}
                         {selectedPackage && (
                             <li>
                                 <span>Paket utama</span>
                                 <span className="value">
-                                    {selectedPackage?.label || selectedPackage?.name || "-"}
+                                    {selectedPackage?.label ||
+                                        selectedPackage?.name ||
+                                        "-"}
                                 </span>
                             </li>
                         )}
@@ -1271,21 +1562,30 @@ export default function OrderConfirmPage() {
                         )}
                         <li>
                             <span>Jumlah</span>
-                            <span className="value">{totalQuantity || quantity} item</span>
+                            <span className="value">
+                                {totalQuantity || quantity} item
+                            </span>
                         </li>
                         <li>
                             <span>Subtotal</span>
-                            <span className="value">{formatIDR(cartSubtotal || 0)}</span>
+                            <span className="value">
+                                {formatIDR(cartSubtotal || 0)}
+                            </span>
                         </li>
                         <li>
                             <span>Pengiriman</span>
                             <span className="value">
                                 {shippingOptionLabel}
-                                <span className="muted" style={{ marginLeft: 6 }}>
+                                <span
+                                    className="muted"
+                                    style={{ marginLeft: 6 }}
+                                >
                                     {shippingMethod === "jemput"
                                         ? shippingFee === 0
                                             ? "(Gratis <=7 km)"
-                                            : `(Ongkir ${formatIDR(shippingFee)})`
+                                            : `(Ongkir ${formatIDR(
+                                                shippingFee
+                                            )})`
                                         : "(Tanpa ongkir)"}
                                 </span>
                             </span>
@@ -1294,25 +1594,63 @@ export default function OrderConfirmPage() {
                             <>
                                 <li>
                                     <span>Ongkir jemput</span>
-                                    <span className="value" style={{ color: shippingFee ? "#d0352f" : "#1e9e52" }}>
-                                        {shippingFee === 0 ? "Gratis (<=7 km)" : formatIDR(shippingFee)}
+                                    <span
+                                        className="value"
+                                        style={{
+                                            color: shippingFee
+                                                ? "#d0352f"
+                                                : "#1e9e52",
+                                        }}
+                                    >
+                                        {shippingFee === 0
+                                            ? "Gratis (<=7 km)"
+                                            : formatIDR(shippingFee)}
                                     </span>
                                 </li>
                                 <li>
                                     <span>Jarak dari toko</span>
-                                    <span className="value" style={{ color: isWithinFreeRange ? "#1e9e52" : "#d0352f" }}>
-                                        {distanceFromStoreKm !== null ? `${distanceFromStoreKm.toFixed(2)} km` : "Belum dihitung"}
-                                        {distanceFromStoreKm !== null && !isWithinFreeRange && " (biaya jemput +Rp10.000)"}
+                                    <span
+                                        className="value"
+                                        style={{
+                                            color: isWithinFreeRange
+                                                ? "#1e9e52"
+                                                : "#d0352f",
+                                        }}
+                                    >
+                                        {distanceFromStoreKm !== null
+                                            ? `${distanceFromStoreKm.toFixed(
+                                                2
+                                            )} km`
+                                            : "Belum dihitung"}
+                                        {distanceFromStoreKm !== null &&
+                                            !isWithinFreeRange &&
+                                            " (biaya jemput +Rp10.000)"}
                                     </span>
                                 </li>
                                 <li>
                                     <span>Lokasi koordinat</span>
                                     <span className="value">
-                                        {location.lat.toFixed(5)}, {location.lng.toFixed(5)}
+                                        {location.lat.toFixed(5)},{" "}
+                                        {location.lng.toFixed(5)}
                                     </span>
                                 </li>
                             </>
                         )}
+                        <li
+                            style={{
+                                borderTop: "1px dashed #e5e7eb",
+                                paddingTop: 12,
+                                marginTop: 8,
+                                fontWeight: 700,
+                                fontSize: 18,
+                                color: "#0f172a",
+                            }}
+                        >
+                            <span>Total Tagihan</span>
+                            <span className="value">
+                                {formatIDR(orderTotal || 0)}
+                            </span>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -1323,7 +1661,10 @@ export default function OrderConfirmPage() {
                 </div>
                 <div>
                     <div className="note-label">Catatan khusus</div>
-                    <p className="service-details__bottom-text1" style={{ margin: 0 }}>
+                    <p
+                        className="service-details__bottom-text1"
+                        style={{ margin: 0 }}
+                    >
                         {notes || "Tidak ada catatan tambahan."}
                     </p>
                 </div>
@@ -1331,23 +1672,49 @@ export default function OrderConfirmPage() {
 
             <div className="action-bar">
                 <div className="action-hint">
-                    Cek lagi detail pesanan sebelum bayar. Anda bisa kembali untuk koreksi pada step sebelumnya.
+                    Cek lagi detail pesanan sebelum bayar. Anda bisa kembali
+                    untuk koreksi pada step sebelumnya.
                 </div>
                 {paymentError && (
-                    <p className="service-details__bottom-text1" style={{ color: "red", margin: "6px 0" }}>
+                    <p
+                        className="service-details__bottom-text1"
+                        style={{ color: "red", margin: "6px 0" }}
+                    >
                         {paymentError}
                     </p>
                 )}
-                <div className="d-flex" style={{ gap: 10, justifyContent: "flex-end" }}>
-                    <button className="thm-btn" type="button" onClick={() => setStep(2)}>
+                <div
+                    className="d-flex"
+                    style={{ gap: 10, justifyContent: "flex-end" }}
+                >
+                    <button
+                        className="thm-btn"
+                        type="button"
+                        onClick={() => setStep(2)}
+                    >
                         <span>Kembali</span>
                         <i className="liquid"></i>
                     </button>
-                    <button className="thm-btn" type="button" onClick={handlePayNow} disabled={payLoading}>
-                        <span>{payLoading ? "Memproses..." : "Bayar Sekarang"}</span>
-                        <i className="liquid"></i>
-                    </button>
+                    {!showSnap && (
+                        <button
+                            className="thm-btn"
+                            type="button"
+                            onClick={handlePayNow}
+                            disabled={payLoading}
+                        >
+                            <span>
+                                {payLoading
+                                    ? "Memproses..."
+                                    : "Bayar Sekarang"}
+                            </span>
+                            <i className="liquid"></i>
+                        </button>
+                    )}
                 </div>
+                <div
+                    id="snap-container"
+                    style={{ marginTop: 20, width: "100%" }}
+                ></div>
             </div>
         </div>
     );
@@ -1355,10 +1722,18 @@ export default function OrderConfirmPage() {
     return (
         <>
             <SEO pageTitle="Konfirmasi Order" />
+            <Script
+                src={SNAP_SRC}
+                data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+                strategy="lazyOnload"
+            />
             <HeaderOne />
             <Breadcrumb heading="Konfirmasi Order" currentPage="Step Order" />
             <section className="service-details pd-120-0-90">
-                <div className="services-one__pattern" style={{ backgroundImage: `url(${BackgroundOne.src})` }}></div>
+                <div
+                    className="services-one__pattern"
+                    style={{ backgroundImage: `url(${BackgroundOne.src})` }}
+                ></div>
                 <div className="container">
                     {renderSteps()}
                     {step === 1 && <StepOne />}
@@ -1367,262 +1742,8 @@ export default function OrderConfirmPage() {
                 </div>
             </section>
             <FooterOne />
-            <style jsx>{`
-                .location-card {
-                    background: linear-gradient(135deg, #f8fbff, #eef2ff);
-                    border: 1px solid #e5e7eb;
-                    border-radius: 18px;
-                    padding: 18px;
-                    box-shadow: 0 22px 70px rgba(15, 23, 42, 0.1);
-                }
-                .location-card__header {
-                    display: flex;
-                    flex-wrap: wrap;
-                    justify-content: space-between;
-                    gap: 16px;
-                    align-items: flex-start;
-                }
-                .location-card__title {
-                    margin: 4px 0 6px;
-                    font-size: 24px;
-                    color: #0f172a;
-                }
-                .chip-row {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 8px;
-                    margin-top: 8px;
-                }
-                .chip {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 8px 12px;
-                    border-radius: 999px;
-                    background: rgba(255, 255, 255, 0.85);
-                    border: 1px solid #e2e8f0;
-                    font-weight: 600;
-                    color: #0f172a;
-                    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-                }
-                .chip i {
-                    color: var(--thm-base);
-                }
-                .chip.soft {
-                    background: rgba(255, 255, 255, 0.95);
-                }
-                .chip-success {
-                    background: #ecfdf3;
-                    color: #166534;
-                    border-color: #bbf7d0;
-                }
-                .chip-danger {
-                    background: #fef2f2;
-                    color: #b91c1c;
-                    border-color: #fecdd3;
-                }
-                .location-card__stats {
-                    display: flex;
-                    gap: 12px;
-                    flex-wrap: wrap;
-                }
-                .stat-card {
-                    background: #fff;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 16px;
-                    padding: 12px 14px;
-                    min-width: 210px;
-                    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
-                }
-                .stat-card .label {
-                    font-size: 12px;
-                    letter-spacing: 0.05em;
-                    text-transform: uppercase;
-                    color: #64748b;
-                    margin-bottom: 2px;
-                    display: block;
-                }
-                .stat-card h4 {
-                    margin: 6px 0 4px;
-                    font-size: 20px;
-                }
-                .stat-card .muted {
-                    margin: 0;
-                    color: #475569;
-                }
-                .location-card__body {
-                    display: grid;
-                    grid-template-columns: minmax(320px, 1.1fr) minmax(280px, 0.9fr);
-                    gap: 16px;
-                    margin-top: 16px;
-                }
-                .location-map-shell {
-                    position: relative;
-                    background: radial-gradient(circle at 20% 20%, #102a43, #0b1829);
-                    border-radius: 16px;
-                    padding: 12px;
-                    border: 1px solid #d7def0;
-                    box-shadow: 0 26px 90px rgba(15, 23, 42, 0.22);
-                }
-                .contact-page-google-map__one {
-                    border-radius: 12px;
-                    border: 1px solid #d7def0;
-                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
-                }
-                .floating-meta {
-                    position: absolute;
-                    left: 16px;
-                    bottom: 16px;
-                    display: flex;
-                    gap: 8px;
-                    flex-wrap: wrap;
-                }
-                .pill {
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 8px 12px;
-                    border-radius: 999px;
-                    background: rgba(255, 255, 255, 0.9);
-                    color: #0f172a;
-                    font-weight: 600;
-                    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
-                }
-                .muted-pill {
-                    background: rgba(255, 255, 255, 0.8);
-                    border: 1px dashed #cbd5e1;
-                }
-                .location-controls {
-                    background: #fff;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 16px;
-                    padding: 14px;
-                    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                }
-                .cta-row {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
-                .coord-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 10px;
-                }
-                .location-card .thm-btn {
-                    box-shadow: 0 12px 30px rgba(17, 24, 39, 0.16);
-                }
-                .location-card .thm-btn.ghost {
-                    background: #f7f9ff;
-                    color: #0f172a;
-                    border: 1px solid #d7def0;
-                    box-shadow: none;
-                }
-                .location-card .comment-form__textarea {
-                    background: #f8fbff;
-                    border-color: #d7def0;
-                }
-                .location-card .comment-form__textarea:focus {
-                    border-color: var(--thm-base);
-                }
-                .map-skeleton {
-                    border-radius: 14px;
-                    overflow: hidden;
-                    background: linear-gradient(90deg, #e5e7eb, #f3f4f6, #e5e7eb);
-                    min-height: 120px;
-                    position: relative;
-                }
-                .map-skeleton__text {
-                    position: absolute;
-                    inset: 0;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: #475569;
-                    font-weight: 600;
-                }
-                .map-skeleton__shimmer {
-                    position: absolute;
-                    inset: 0;
-                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
-                    animation: shimmer 1.6s infinite;
-                }
-                .cart-line {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    gap: 10px;
-                }
-                .cart-line__info {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                }
-                .remove-cart-btn {
-                    width: 38px;
-                    height: 38px;
-                    border-radius: 12px;
-                    border: 1px solid #e2e8f0;
-                    background: linear-gradient(135deg, #ffffff, #f8fafc);
-                    color: #0f172a;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    box-shadow: 0 10px 30px rgba(0, 74, 148, 0.12);
-                    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-                }
-                .remove-cart-btn:hover {
-                    background: linear-gradient(135deg, #fff1f2, #ffe4e6);
-                    border-color: #fecdd3;
-                    color: #b91c1c;
-                    transform: translateY(-1px);
-                    box-shadow: 0 14px 36px rgba(185, 28, 28, 0.2);
-                }
-                .remove-cart-btn:active {
-                    transform: translateY(0);
-                    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
-                }
-                .remove-cart-btn:focus-visible {
-                    outline: 2px solid #fb7185;
-                    outline-offset: 2px;
-                }
-                .remove-cart-btn i {
-                    pointer-events: none;
-                }
-                @keyframes shimmer {
-                    0% {
-                        transform: translateX(-100%);
-                    }
-                    100% {
-                        transform: translateX(100%);
-                    }
-                }
-                @media (max-width: 991px) {
-                    .location-card__body {
-                        grid-template-columns: 1fr;
-                    }
-                    .location-card__stats {
-                        width: 100%;
-                    }
-                }
-                @media (max-width: 575px) {
-                    .location-card__title {
-                        font-size: 20px;
-                    }
-                    .chip {
-                        font-size: 13px;
-                        padding: 6px 10px;
-                    }
-                    .pill {
-                        font-size: 13px;
-                        padding: 6px 10px;
-                    }
-                }
-            `}</style>
         </>
     );
 }
+
+

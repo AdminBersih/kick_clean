@@ -83,7 +83,7 @@ const HeaderOne = () => {
     }
 
     return (
-      <Link href="/login" className="main-header__btn thm-btn main-header__btn--contact">
+      <Link href="/login#login-card" className="main-header__btn thm-btn main-header__btn--contact">
         <span>Login</span>
         <div className="liquid"></div>
       </Link>

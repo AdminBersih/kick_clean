@@ -49,7 +49,7 @@ export default function LoginPage() {
         <div className="container">
           <div className="row justify-content-center">
             <div className="col-xl-10 col-lg-11">
-              <div className="contact-page-form__inner auth-card">
+              <div className="contact-page-form__inner auth-card" id="login-card">
                 <div className="row g-4 align-items-center">
                   <div className="col-md-6">
                     <div className="auth-card__intro">
@@ -74,7 +74,7 @@ export default function LoginPage() {
                       </ul>
                       <div className="auth-card__switch">
                         Baru di Kick Clean?{" "}
-                        <Link href="/register">
+                        <Link href="/register#register-card">
                           <strong>Daftar sekarang</strong>
                         </Link>
                       </div>

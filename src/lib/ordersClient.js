@@ -6,7 +6,7 @@ const authHeader = (token) => (token ? { Authorization: `Bearer ${token}` } : {}
  * Create order on backend using current cart snapshot.
  * Uses sessionId for guest carts and Authorization header for logged-in users.
  */
-export async function createOrder({ sessionId, customerName, phone, email, address, pickupMethod, notes, token }) {
+export async function createOrder({ sessionId, customerName, phone, email, address, pickupMethod, deliveryFee, paymentType, notes, token }) {
     const body = {
         sessionId: token ? undefined : sessionId,
         customerName,
@@ -14,6 +14,8 @@ export async function createOrder({ sessionId, customerName, phone, email, addre
         email,
         address,
         pickupMethod,
+        deliveryFee,
+        paymentType,
         notes,
     };
 

@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IOrderItem {
-  service_id: mongoose.Types.ObjectId;
+  service_id: mongoose.Types.ObjectId | string;
   name: string;
   price: number;
   quantity: number;
@@ -30,7 +30,7 @@ export interface IOrder extends Document {
 }
 
 const OrderItemSchema = new Schema<IOrderItem>({
-  service_id: { type: Schema.Types.ObjectId, ref: "Service", required: true },
+  service_id: { type: Schema.Types.Mixed, required: true },
   name: String,
   price: Number,
   quantity: { type: Number, default: 1 },
