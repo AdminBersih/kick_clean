@@ -3,8 +3,10 @@ import dbConnect from "../../../lib/dbConnect";
 import Cart from "../../../models/Cart";
 import Order from "../../../models/Order";
 import { getUserFromRequest } from "../../../lib/auth";
-import { sendEmail, sendSmsPlaceholder } from "../utils/notify";
+import { sendEmail, sendWhatsApp} from "../utils/notify";
 import midtransClient from "midtrans-client";
+import { buildOrderEmailTemplate } from "../utils/emailTemplate";
+import { buildWhatsAppTemplate } from "../utils/waTemplate";
 
 export default async function handler(
   req: NextApiRequest,
@@ -145,21 +147,26 @@ export default async function handler(
   });
 
   // Send notification: email & phone (if provided)
-  const trackingUrl = `${process.env.NEXT_PUBLIC_BASE_URL || ""
-    }/track?orderCode=${orderCode}`;
+  const statusUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/order/status?orderCode=${orderCode}`;
+  const trackUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/track?orderCode=${orderCode}`;
 
-  if (email) {
-    const html = `<p>Terima kasih ${customerName}. Pesanan kamu: <b>${orderCode}</b></p>
-      <p>Tracking: <a href="${trackingUrl}">${trackingUrl}</a></p>`;
-    sendEmail(email, `Order ${orderCode} - KickClean`, html).catch((err) =>
-      console.error(err)
-    );
-  }
+  const html = buildOrderEmailTemplate({
+    customerName,
+    orderCode,
+    statusUrl,
+    trackUrl,
+  });
 
-  if (phone) {
-    const sms = `Terima kasih ${customerName}. Order kamu ${orderCode}. Lihat status: ${trackingUrl}`;
-    sendSmsPlaceholder(phone, sms);
-  }
+  sendEmail(email, `Order ${orderCode} - CleanKick`, html);
+
+  const waMessage = buildWhatsAppTemplate({
+    customerName,
+    orderCode,
+    statusUrl,
+    trackUrl,
+  });
+
+  sendWhatsApp(phone, waMessage);
 
   return res
     .status(201)
