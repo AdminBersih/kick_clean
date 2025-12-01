@@ -30,9 +30,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await Order.updateOne(
       { orderCode: id },
       {
-        status: "cancelled",
-        midtrans: {
-          paymentStatus: "cancel"
+        $set: {
+          status: "cancelled",
+          "midtrans.paymentStatus": "cancel"
         }
       }
     );

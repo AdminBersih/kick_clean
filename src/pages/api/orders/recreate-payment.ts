@@ -46,13 +46,16 @@ export default async function handler(
   const trx = await snap.createTransaction(payload);
 
   // Update stored redirect url
-  await order.updateOne({
-    midtrans: {
-      ...order.midtrans,
-      redirectUrl: trx.redirect_url,
-      paymentStatus: "pending",
-    },
-  });
+  await Order.updateOne(
+    { orderCode },
+    {
+      $set: {
+        "midtrans.redirectUrl": trx.redirect_url,
+        "midtrans.paymentStatus": "pending"
+      }
+    }
+  );
+
 
   return res.json({
     message: "Payment link regenerated",

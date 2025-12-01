@@ -19,23 +19,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!order) return res.status(404).json({ message: "Order not found" });
 
   // Simpan status Midtrans ke DB
-  await order.updateOne({
-    midtrans: {
-      orderId: order_id,
-      transactionId: transaction_id,
-      paymentStatus: transaction_status,
-      paymentType: payment_type,
-      fraudStatus: fraud_status
+  await Order.updateOne(
+    { orderCode: order_id },
+    {
+      $set: {
+        "midtrans.orderId": order_id,
+        "midtrans.transactionId": transaction_id,
+        "midtrans.paymentStatus": transaction_status,
+        "midtrans.paymentType": payment_type,
+        "midtrans.fraudStatus": fraud_status
+      }
     }
-  });
+  );
 
-  // Atur status order internal
-  if (transaction_status === "settlement" || transaction_status === "capture") {
-    await order.updateOne({ status: "processing" });
+  // Mapping status Midtrans -> status order internal
+  if (
+    transaction_status === "settlement" ||
+    (transaction_status === "capture" && fraud_status === "accept")
+  ) {
+    await Order.updateOne(
+      { orderCode: order_id },
+      { $set: { status: "processing" } }
+    );
   }
 
-  if (transaction_status === "expire" || transaction_status === "cancel" || transaction_status === "failure") {
-    await order.updateOne({ status: "cancelled" });
+  // Status gagal / deny / expire / cancel → cancelled
+  if (
+    transaction_status === "expire" ||
+    transaction_status === "cancel" ||
+    transaction_status === "deny"
+  ) {
+    await Order.updateOne(
+      { orderCode: order_id },
+      { $set: { status: "cancelled" } }
+    );
   }
 
   return res.json({ message: "OK" });
