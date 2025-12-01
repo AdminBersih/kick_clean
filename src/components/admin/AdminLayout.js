@@ -1,30 +1,33 @@
+// src/components/admin/AdminLayout.js
 import Sidebar from './Sidebar';
-import { Bell, ChevronDown, LogOut } from 'lucide-react'; // Tambahkan LogOut
+import { Bell, ChevronDown, LogOut, Menu, X } from 'lucide-react'; // Tambah Menu & X
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react'; // Tambahkan useState
+import { useEffect, useState } from 'react';
 
 export default function AdminLayout({ children }) {
   const router = useRouter();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State untuk dropdown
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false); // State baru untuk Mobile Sidebar
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
       router.push('/admin/login');
     }
+  }, []);
+
+  // Tutup sidebar otomatis saat pindah halaman (UX yang baik di HP)
+  useEffect(() => {
+    const handleRouteChange = () => setMobileSidebarOpen(false);
+    router.events.on('routeChangeStart', handleRouteChange);
+    return () => router.events.off('routeChangeStart', handleRouteChange);
   }, [router]);
 
-  // --- FUNGSI LOGOUT ---
   const handleLogout = async () => {
     try {
-      // 1. Panggil API Logout (Backend)
       await fetch('/api/auth/logout', { method: 'POST' });
-
-      // 2. Hapus Token Frontend
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminUser');
-
-      // 3. Redirect ke Login
       router.push('/admin/login');
     } catch (error) {
       console.error("Gagal logout:", error);
@@ -33,74 +36,92 @@ export default function AdminLayout({ children }) {
 
   return (
     <div id="admin-scope"> 
-      <div className="admin-wrapper">
-        <Sidebar />
+      {/* Tambahkan class dinamis 'mobile-open' jika sidebar aktif */}
+      <div className={`admin-wrapper ${isMobileSidebarOpen ? 'mobile-open' : ''}`}>
+        
+        {/* --- SIDEBAR --- */}
+        {/* Di HP, sidebar ini akan kita kontrol lewat CSS berdasarkan class 'mobile-open' */}
+        <div className="sidebar-container">
+             <Sidebar />
+             {/* Tombol Close khusus HP (Opsional, tapi membantu) */}
+             <button 
+                className="mobile-close-btn"
+                onClick={() => setMobileSidebarOpen(false)}
+             >
+                <X size={20} />
+             </button>
+        </div>
+
+        {/* --- OVERLAY (Layar hitam transparan saat sidebar buka di HP) --- */}
+        {isMobileSidebarOpen && (
+            <div 
+                className="mobile-overlay"
+                onClick={() => setMobileSidebarOpen(false)}
+            ></div>
+        )}
         
         <main className="main-content">
           <header className="topbar">
-              <Bell size={20} color="#6B7280" style={{cursor:'pointer'}} />
-              
-              {/* --- BAGIAN DROPDOWN --- */}
-              <div style={{ position: 'relative' }}>
-                  
-                  {/* Tombol ADMIN (Tetap pakai class Anda) */}
-                  <button 
-                    className="admin-btn" 
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  >
-                      <span className="font-medium">ADMIN</span> 
-                      <ChevronDown size={16} />
-                  </button>
+              {/* --- TOMBOL HAMBURGER (Hanya muncul di HP via CSS) --- */}
+              <button 
+                className="mobile-menu-btn"
+                onClick={() => setMobileSidebarOpen(true)}
+              >
+                  <Menu size={24} color="#1F2937" />
+              </button>
 
-                  {/* Menu Dropdown (Muncul jika state true) */}
-                  {isDropdownOpen && (
-                      <div style={{
-                          position: 'absolute',
-                          top: '120%',
-                          right: 0,
-                          backgroundColor: 'white',
-                          border: '1px solid #E5E7EB',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
-                          padding: '8px',
-                          minWidth: '140px',
-                          zIndex: 100
-                      }}>
-                          <button 
-                            onClick={handleLogout}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '10px',
-                                width: '100%',
-                                padding: '8px 12px',
-                                border: 'none',
-                                background: 'transparent',
-                                color: '#DC2626', // Warna Merah
-                                fontSize: '13px',
-                                fontWeight: '600',
-                                cursor: 'pointer',
-                                borderRadius: '4px'
-                            }}
-                            onMouseEnter={(e) => e.target.style.background = '#FEF2F2'}
-                            onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                          >
-                              <LogOut size={16} />
-                              Logout
-                          </button>
-                      </div>
-                  )}
+              <div style={{flex:1}}></div> {/* Spacer agar konten kanan mentok */}
+
+              <div style={{display:'flex', alignItems:'center', gap:'20px'}}>
+                  <Bell size={20} color="#6B7280" style={{cursor:'pointer'}} />
                   
-                  {/* Overlay untuk menutup dropdown saat klik di luar */}
-                  {isDropdownOpen && (
-                      <div 
-                        style={{position: 'fixed', top:0, left:0, right:0, bottom:0, zIndex: 90}}
-                        onClick={() => setIsDropdownOpen(false)}
-                      ></div>
-                  )}
+                  {/* --- DROPDOWN ADMIN --- */}
+                  <div style={{ position: 'relative' }}>
+                      <button 
+                        className="admin-btn" 
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      >
+                          <span className="font-medium admin-name-text">ADMIN</span> 
+                          <ChevronDown size={16} />
+                      </button>
+
+                      {isDropdownOpen && (
+                          <div style={{
+                              position: 'absolute',
+                              top: '120%', right: 0,
+                              backgroundColor: 'white',
+                              border: '1px solid #E5E7EB',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                              padding: '8px',
+                              minWidth: '140px',
+                              zIndex: 100
+                          }}>
+                              <button 
+                                onClick={handleLogout}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: '10px',
+                                    width: '100%', padding: '8px 12px', border: 'none',
+                                    background: 'transparent', color: '#DC2626',
+                                    fontSize: '13px', fontWeight: '600', cursor: 'pointer',
+                                    borderRadius: '4px'
+                                }}
+                                onMouseEnter={(e) => e.target.style.background = '#FEF2F2'}
+                                onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                              >
+                                  <LogOut size={16} /> Logout
+                              </button>
+                          </div>
+                      )}
+                      
+                      {isDropdownOpen && (
+                          <div 
+                            style={{position: 'fixed', top:0, left:0, right:0, bottom:0, zIndex: 90}}
+                            onClick={() => setIsDropdownOpen(false)}
+                          ></div>
+                      )}
+                  </div>
               </div>
-              {/* --- END DROPDOWN --- */}
-
           </header>
 
           <div className="page-content">

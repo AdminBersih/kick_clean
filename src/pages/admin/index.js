@@ -1,6 +1,7 @@
 // src/pages/admin/index.js
 import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
+import SalesChart from '@/components/admin/SalesChart'; // <--- IMPORT PENTING
 import { ShoppingBag, MoreVertical, Loader2, TrendingUp, Package, Users } from 'lucide-react';
 import Link from 'next/link';
 
@@ -13,9 +14,9 @@ export default function Dashboard() {
     async function fetchDashboard() {
       try {
         const token = localStorage.getItem('adminToken');
-        // Jika tidak ada token, biarkan AdminLayout yang mengurus redirect (atau return null disini)
         if (!token) return; 
 
+        // Pastikan URL backend ini sudah benar (sesuai file dashboard.ts Anda)
         const res = await fetch('/api/admin/orders/dashboard', {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -49,9 +50,10 @@ export default function Dashboard() {
     );
   }
 
-  // Fallback data jika API belum siap/kosong
+  // Fallback data
   const stats = data?.stats || { revenue: 0, totalOrders: 0, activeOrders: 0, finishedOrders: 0 };
   const recentOrders = data?.recentOrders || [];
+  const chartData = data?.chartData || []; // <--- Ambil data grafik dari backend
 
   return (
     <AdminLayout>
@@ -66,51 +68,25 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 1. Stats Cards (Data Real dari DB) */}
+      {/* 1. Stats Cards */}
       <div className="stats-grid">
-        <StatCard 
-            title="Total Revenue" 
-            value={formatRupiah(stats.revenue)} 
-            desc="Pemasukan bersih" 
-            icon={<TrendingUp size={24} />}
-            color="blue"
-        />
-        <StatCard 
-            title="Total Orders" 
-            value={stats.totalOrders} 
-            desc="Semua pesanan masuk" 
-            icon={<ShoppingBag size={24} />}
-            color="purple"
-        />
-        <StatCard 
-            title="Active Process" 
-            value={stats.activeOrders} 
-            desc="Sedang dikerjakan" 
-            icon={<Package size={24} />}
-            color="orange"
-        />
-        <StatCard 
-            title="Completed" 
-            value={stats.finishedOrders} 
-            desc="Pesanan selesai" 
-            icon={<Users size={24} />} /* Icon placeholder */
-            color="green"
-        />
+        <StatCard title="Total Revenue" value={formatRupiah(stats.revenue)} desc="Pemasukan bersih" icon={<TrendingUp size={24} />} color="blue" />
+        <StatCard title="Total Orders" value={stats.totalOrders} desc="Semua pesanan masuk" icon={<ShoppingBag size={24} />} color="purple" />
+        <StatCard title="Active Process" value={stats.activeOrders} desc="Sedang dikerjakan" icon={<Package size={24} />} color="orange" />
+        <StatCard title="Completed" value={stats.finishedOrders} desc="Pesanan selesai" icon={<Users size={24} />} color="green" />
       </div>
 
-      {/* 2. Placeholder Grafik */}
-      <div className="card" style={{ marginBottom: '24px' }}>
+      {/* 2. SALES CHART (Sudah Terhubung) */}
+      <div className="card" style={{ marginBottom: '24px', paddingBottom:'10px' }}>
         <div className="card-header">
-            <span style={{fontSize:'16px', color:'#1f2937'}}>Sales Statistics</span>
+            <span style={{fontSize:'16px', color:'#1f2937', fontWeight:'700'}}>Sales Statistics</span>
             <div>
-                <button className="admin-btn" style={{padding:'4px 12px', fontSize:'12px'}}>THIS WEEK</button>
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Last 7 Days</span>
             </div>
         </div>
-        <div style={{height: '250px', background: '#F9FAFB', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center', color:'#9CA3AF', border:'1px dashed #E5E7EB'}}>
-            <div style={{textAlign:'center'}}>
-                <p>Grafik Penjualan akan muncul di sini</p>
-                <small>(Membutuhkan library Chart.js / Recharts)</small>
-            </div>
+        {/* Render Grafik */}
+        <div style={{ height: '320px', marginTop: '10px' }}>
+            <SalesChart data={chartData} />
         </div>
       </div>
 
@@ -141,7 +117,6 @@ export default function Dashboard() {
                             <TableRow 
                                 key={order._id}
                                 id={order.orderCode}
-                                // Ambil nama service pertama, handling jika array kosong
                                 product={order.items?.[0]?.name || 'Service'}
                                 extraItems={order.items?.length > 1 ? `+${order.items.length - 1} more` : ''}
                                 date={new Date(order.createdAt).toLocaleDateString('id-ID', {day:'numeric', month:'short'})}
@@ -163,25 +138,13 @@ export default function Dashboard() {
 // --- Sub-Komponen ---
 
 function StatCard({ title, value, desc, icon, color }) {
-    // Mapping warna background icon
-    const bgColors = {
-        blue: '#EFF6FF',
-        purple: '#FAF5FF',
-        orange: '#FFF7ED',
-        green: '#F0FDF4'
-    };
-    const textColors = {
-        blue: '#1D4ED8',
-        purple: '#7E22CE',
-        orange: '#C2410C',
-        green: '#15803D'
-    };
+    const bgColors = { blue: '#EFF6FF', purple: '#FAF5FF', orange: '#FFF7ED', green: '#F0FDF4' };
+    const textColors = { blue: '#1D4ED8', purple: '#7E22CE', orange: '#C2410C', green: '#15803D' };
 
     return (
         <div className="card">
             <div className="card-header" style={{marginBottom:'12px'}}>
-                {title}
-                <MoreVertical size={16} />
+                {title} <MoreVertical size={16} />
             </div>
             <div className="card-body">
                 <div className="icon-box" style={{
@@ -201,20 +164,11 @@ function StatCard({ title, value, desc, icon, color }) {
 }
 
 function TableRow({ product, extraItems, id, date, name, status, amount }) {
-    // Mapping status ke class CSS (sesuai admin.css)
     let badgeClass = '';
-    let badgeLabel = status;
-
-    if (status === 'finished') {
-        badgeClass = 'delivered'; // Hijau
-    } else if (status === 'cancelled') {
-        badgeClass = 'canceled'; // Merah
-    } else if (status === 'processing') {
-        // Kita pakai style manual untuk biru karena di CSS admin mungkin belum ada class khusus
-        badgeClass = 'processing-custom'; 
-    } else {
-        badgeClass = 'badge-pending'; // Kuning (dari CSS yang tadi Anda tambahkan)
-    }
+    if (status === 'finished') badgeClass = 'delivered';
+    else if (status === 'cancelled') badgeClass = 'canceled';
+    else if (status === 'processing') badgeClass = 'processing-custom'; 
+    else badgeClass = 'badge-pending';
 
     return (
         <tr>
@@ -226,7 +180,6 @@ function TableRow({ product, extraItems, id, date, name, status, amount }) {
             <td style={{color:'#6B7280'}}>{date}</td>
             <td>{name}</td>
             <td>
-                {/* Render Badge */}
                 {status === 'processing' ? (
                     <span style={{color:'#2563EB', fontWeight:600, display:'flex', alignItems:'center', gap:'6px'}}>
                         <span style={{width:'8px', height:'8px', borderRadius:'50%', background:'#2563EB'}}></span>

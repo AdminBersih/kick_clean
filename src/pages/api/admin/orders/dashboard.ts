@@ -1,4 +1,4 @@
-// src/pages/api/admin/dashboard.ts
+// src/pages/api/admin/dashboard.ts (Versi Upgrade dengan Chart Data)
 import type { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/dbConnect";
 import Order from "@/models/Order";
@@ -15,6 +15,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === "GET") {
     try {
+      // --- TAMBAHAN BARU: Hitung tanggal 7 hari yang lalu ---
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      // -----------------------------------------------------
+
       // 2. Jalankan beberapa Query sekaligus (Parallel) agar cepat
       const [
         revenueAgg, 
@@ -22,9 +27,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         activeOrders, 
         finishedOrders, 
         cancelledOrders, 
-        recentOrders
+        recentOrders,
+        dailySales // <--- VARIABEL BARU UNTUK CHART
       ] = await Promise.all([
-        // A. Hitung Total Pendapatan (Hanya status 'finished' atau 'processing')
+        // A. Hitung Total Pendapatan
         Order.aggregate([
           { $match: { status: { $in: ["finished", "processing"] } } },
           { $group: { _id: null, total: { $sum: "$totalPrice" } } }
@@ -38,9 +44,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         // C. Ambil 5 Order Terbaru
         Order.find({})
-             .sort({ createdAt: -1 }) // Urutkan dari paling baru
+             .sort({ createdAt: -1 })
              .limit(5)
-             .lean()
+             .lean(),
+
+        // --- D. QUERY BARU: Ambil Data Grafik (7 Hari Terakhir) ---
+        Order.aggregate([
+          { 
+            $match: { 
+              // Ambil order yang sukses/proses DAN dibuat dalam 7 hari terakhir
+              status: { $in: ["finished", "processing"] }, 
+              createdAt: { $gte: sevenDaysAgo } 
+            } 
+          },
+          {
+            $group: {
+              // Group berdasarkan Tanggal (Format: YYYY-MM-DD)
+              _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+              total: { $sum: "$totalPrice" }, // Total uang hari itu
+              count: { $sum: 1 } // Jumlah order hari itu
+            }
+          },
+          { $sort: { _id: 1 } } // Urutkan dari tanggal lama ke baru
+        ])
+        // ---------------------------------------------------------
       ]);
 
       const revenue = revenueAgg.length > 0 ? revenueAgg[0].total : 0;
@@ -54,7 +81,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           finishedOrders,
           cancelledOrders
         },
-        recentOrders
+        recentOrders,
+        chartData: dailySales // <--- KIRIM DATA INI KE FRONTEND
       });
 
     } catch (error) {

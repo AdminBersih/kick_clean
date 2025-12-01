@@ -1146,3 +1146,144 @@
 }
 #admin-scope .rt-total .label { color: #9CA3AF; font-weight: 500 !important; }
 #admin-scope .rt-total .value { font-size: 18px !important; font-weight: 700 !important; color: white; }
+
+
+/* ... (Kode CSS lama Anda tetap di atas) ... */
+
+/* =========================================
+   MOBILE RESPONSIVE STYLES
+   (Hanya aktif di layar HP/Tablet)
+   ========================================= */
+
+/* Default: Sembunyikan elemen mobile di Desktop */
+#admin-scope .mobile-menu-btn { display: none; }
+#admin-scope .mobile-overlay { display: none; }
+#admin-scope .mobile-close-btn { display: none; }
+
+@media (max-width: 992px) {
+  
+  /* 1. Reset Layout Utama */
+  #admin-scope .main-content {
+    margin-left: 0 !important; /* Hapus margin kiri desktop */
+    width: 100% !important;
+  }
+
+  /* 2. Sidebar Logic (Off-Canvas) */
+  #admin-scope .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 260px;
+    z-index: 2000; /* Di atas segalanya */
+    transform: translateX(-100%); /* Sembunyi ke kiri */
+    transition: transform 0.3s ease-in-out;
+    box-shadow: none;
+  }
+
+  /* Saat class 'mobile-open' aktif (ditambah via React) */
+  #admin-scope .mobile-open .sidebar {
+    transform: translateX(0); /* Munculkan sidebar */
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+  }
+
+  /* 3. Overlay Gelap */
+  #admin-scope .mobile-overlay {
+    display: block;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); /* Hitam transparan */
+    z-index: 1500; /* Di bawah sidebar, di atas konten */
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.2s;
+  }
+
+  /* 4. Tombol Hamburger (Menu) */
+  #admin-scope .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 8px;
+    margin-right: 12px;
+    cursor: pointer;
+    color: var(--text-dark);
+  }
+
+  /* 5. Tombol Close di Sidebar (Opsional) */
+  #admin-scope .mobile-close-btn {
+    display: flex;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: transparent;
+    border: none;
+    color: #6B7280;
+    cursor: pointer;
+    z-index: 2001;
+  }
+
+  /* 6. Penyesuaian Topbar */
+  #admin-scope .topbar {
+    padding: 0 16px; /* Padding lebih kecil di HP */
+    justify-content: space-between; /* Menu di kiri, Profil di kanan */
+  }
+  
+  #admin-scope .admin-name-text {
+    display: none; /* Sembunyikan tulisan 'ADMIN' di HP biar hemat tempat */
+  }
+
+  /* 7. Grid Menjadi 1 Kolom */
+  #admin-scope .stats-grid,
+  #admin-scope .info-grid, 
+  #admin-scope .add-product-wrapper,
+  #admin-scope .payment-note-grid,
+  #admin-scope .form-row {
+    grid-template-columns: 1fr !important; /* Paksa jadi 1 kolom ke bawah */
+    gap: 16px;
+  }
+
+  /* 8. Tabel Agar Bisa Scroll Samping (Penting!) */
+  #admin-scope .table-wrapper,
+  #admin-scope .rounded-table-box {
+    overflow-x: auto; /* Scroll horizontal jika tabel kepanjangan */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  #admin-scope .custom-table {
+    min-width: 600px; /* Paksa lebar tabel agar tidak gepeng */
+  }
+
+  /* 9. Header Halaman */
+  #admin-scope .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  #admin-scope .order-top-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+  
+  #admin-scope .right-actions {
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 12px;
+  }
+  
+  #admin-scope .status-actions-container {
+    width: 100%;
+    overflow-x: auto; /* Tombol status bisa di-scroll jika layar sangat kecil */
+  }
+  
+  #admin-scope .status-btn {
+    white-space: nowrap; /* Teks tombol tidak turun ke bawah */
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
